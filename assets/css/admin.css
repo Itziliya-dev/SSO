@@ -1,0 +1,694 @@
+/* فونت‌های پروژه */
+@import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts.css');
+
+/* متغیرهای رنگ و طرح‌بندی */
+:root {
+    /* رنگ‌های اصلی */
+    --primary-color: #7c4dff;
+    --primary-hover: #6a40e0;
+    --danger-color: #ff4f4f;
+    --success-color: #00c853;
+    --warning-color: #ffc107;
+    --info-color: #2196f3;
+    --purple-light: #b388ff;
+    --purple-dark: #651fff;
+    
+    /* رنگ‌های متن */
+    --text-primary: #f5f5f5;
+    --text-secondary: #e0e0e0;
+    --text-muted: #bdbdbd;
+    --text-dark: #212121;
+    
+    /* رنگ‌های پس‌زمینه */
+    --dark-bg: #121212;
+    --card-bg: rgba(40, 40, 60, 0.8);
+    --card-border: rgba(124, 77, 255, 0.3);
+    --glass-bg: rgba(30, 30, 50, 0.7);
+    --glass-border: rgba(124, 77, 255, 0.4);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    
+    /* اندازه‌ها */
+    --border-radius: 12px;
+    --border-radius-sm: 8px;
+    --box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    
+    /* فونت‌ها */
+    --font-primary: 'Vazirmatn', sans-serif;
+    --font-secondary: 'Vazirmatn', sans-serif;
+}
+
+/* ریست استایل‌های پیش‌فرض */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--font-primary);
+}
+
+body {
+    background: url('../images/background.jpg') no-repeat center center fixed;
+    background-size: cover;
+    min-height: 100vh;
+    color: var(--text-primary);
+    padding: 20px;
+    direction: rtl;
+    font-family: var(--font-primary);
+    font-weight: 400;
+    line-height: 1.6;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* طرح‌بندی اصلی */
+.admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* هدر پنل مدیریت */
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    animation: fadeInDown 0.6s ease;
+}
+
+.admin-title {
+    font-size: 28px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    font-family: var(--font-secondary);
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+/* دکمه‌های عمومی */
+.btn-panel {
+    background: var(--primary-color);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(124, 77, 255, 0.4);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-secondary);
+    letter-spacing: 0.3px;
+}
+
+.btn-panel:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(124, 77, 255, 0.5);
+}
+
+.buttons-container {
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+    margin: 10px;
+    flex-wrap: wrap;
+}
+
+/* کارت‌های مدیریت */
+.admin-card {
+    background: var(--glass-bg);
+    border-radius: var(--border-radius);
+    backdrop-filter: blur(12px);
+    padding: 25px;
+    box-shadow: var(--glass-shadow);
+    border: 1px solid var(--glass-border);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    margin-bottom: 25px;
+}
+
+.admin-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+}
+
+.admin-card h2 {
+    color: var(--text-primary);
+    font-size: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    font-family: var(--font-secondary);
+    font-weight: 600;
+}
+
+/* فرم‌ها */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+label {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: var(--font-secondary);
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text-primary);
+    outline: none;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    font-family: var(--font-primary);
+    font-weight: 500;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 0 0 3px rgba(124, 77, 255, 0.2);
+}
+
+.glass-input {
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+}
+
+.glass-input:focus {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(124, 77, 255, 0.5) !important;
+}
+
+.submit-btn {
+    background: var(--primary-color);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 14px;
+    font-size: 16px;
+    width: 100%;
+    font-family: var(--font-secondary);
+    font-weight: 600;
+}
+
+.submit-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+}
+
+.submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* جداول */
+.table-container {
+    overflow-x: auto;
+    max-height: 600px;
+    overflow-y: auto;
+    border-radius: var(--border-radius);
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(5px);
+}
+
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    color: var(--text-primary);
+    font-family: var(--font-primary);
+    font-weight: 500;
+}
+
+.user-table thead tr {
+    background: linear-gradient(135deg, rgba(124, 77, 255, 0.8), rgba(94, 53, 177, 0.8));
+}
+
+.user-table th {
+    padding: 16px 20px;
+    text-align: center;
+    font-weight: 600;
+    color: white;
+    position: relative;
+    border: none;
+    letter-spacing: 0.5px;
+}
+
+.user-table th:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 60%;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.user-table tbody tr {
+    background: rgba(40, 40, 60, 0.6);
+    transition: all 0.3s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.user-table tbody tr:hover {
+    background: rgba(124, 77, 255, 0.3);
+}
+
+.user-table td {
+    padding: 14px 20px;
+    text-align: center;
+    vertical-align: middle;
+    border: none;
+    white-space: nowrap;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* دکمه‌های عملیاتی (آیکون‌های گرد) */
+.actions {
+    white-space: nowrap;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin: 0 3px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: white;
+    font-size: 14px;
+    padding: 0;
+}
+
+.action-btn i {
+    margin: 0;
+    font-size: 14px;
+}
+
+.action-btn:hover {
+    transform: scale(1.1);
+}
+
+/* رنگ‌بندی دکمه‌های عملیاتی */
+.action-btn.view-details {
+    background-color: rgba(33, 150, 243, 0.8);
+}
+
+.action-btn.view-details:hover {
+    background-color: #2196F3;
+}
+
+.action-btn.suspend-btn {
+    background-color: rgba(255, 193, 7, 0.8);
+}
+
+.action-btn.suspend-btn:hover {
+    background-color: #FFC107;
+}
+
+.action-btn.activate-btn {
+    background-color: rgba(76, 175, 80, 0.8);
+}
+
+.action-btn.activate-btn:hover {
+    background-color: #4CAF50;
+}
+
+.action-btn.reset-btn {
+    background-color: rgba(156, 39, 176, 0.8);
+}
+
+.action-btn.reset-btn:hover {
+    background-color: #9C27B0;
+}
+
+.action-btn.delete-btn {
+    background-color: rgba(255, 87, 34, 0.8);
+}
+
+.action-btn.delete-btn:hover {
+    background-color: #FF5722;
+}
+
+.action-btn.view-request {
+    background-color: rgba(33, 150, 243, 0.8);
+}
+
+.action-btn.view-request:hover {
+    background-color: #2196F3;
+}
+
+.action-btn.approve-request {
+    background-color: rgba(76, 175, 80, 0.8);
+}
+
+.action-btn.approve-request:hover {
+    background-color: #4CAF50;
+}
+
+.action-btn.staff-request {
+    background-color: rgb(202, 202, 17);
+}
+
+.action-btn.action-btn.staff-request:hover {
+    background-color: rgb(232, 232, 13);
+}
+
+.action-btn.reject-request {
+    background-color: rgba(255, 87, 34, 0.8);
+}
+
+.action-btn.reject-request:hover {
+    background-color: #FF5722;
+}
+
+/* وضعیت‌ها */
+/* .status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+} */
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: "Vazirmatn", sans-serif; /* استفاده از فونت Vazirmatn */
+    direction: rtl; /* برای متن‌های فارسی */
+    line-height: 1.6; /* ارتفاع خط مناسب برای فارسی */
+    text-align: center;
+}
+
+.status-badge.pending {
+    background: rgba(255, 193, 7, 0.2);
+    color: var(--warning-color);
+}
+
+.status-badge.approved {
+    background: rgba(0, 200, 83, 0.2);
+    color: var(--success-color);
+    font-weight: 500;
+    font-weight: bold;
+}
+
+.status-badge.rejected {
+    background: rgba(255, 79, 79, 0.2);
+    color: var(--danger-color);
+}
+
+.status-badge.active {
+    background: rgba(124, 77, 255, 0.2);
+    color: var(--primary-color);
+}
+
+.status-badge.suspended {
+    background: rgba(255, 79, 79, 0.2);
+    color: var(--danger-color);
+}
+
+
+.status-badge.staff {
+    background-color: #124165; /* رنگ خاکستری برای استف */
+    color: white;
+    font-family: var(--primary-hover);
+    font-weight: bold;
+}
+/* مدال‌ها */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    overflow: auto;
+}
+
+.modal-content {
+    background: rgba(40, 40, 60, 0.95);
+    margin: 5% auto;
+    padding: 25px;
+    border-radius: var(--border-radius);
+    width: 90%;
+    max-width: 500px;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    animation: modalFadeIn 0.3s ease;
+    position: relative;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-header h3 {
+    color: var(--primary-color);
+    font-size: 18px;
+    font-family: var(--font-secondary);
+}
+
+.close-modal {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.close-modal:hover {
+    color: var(--danger-color);
+    transform: rotate(90deg);
+}
+
+/* جزئیات کاربر و درخواست‌ها */
+.user-details, .request-details {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detail-label {
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: var(--font-secondary);
+}
+
+.detail-value {
+    color: white;
+    text-align: left;
+    font-family: var(--font-primary);
+}
+
+/* نوتیفیکیشن‌ها */
+.notification-container {
+    position: fixed;
+    z-index: 99999;
+    width: 100%;
+    max-width: 350px;
+    padding: 15px;
+    box-sizing: border-box;
+}
+
+.notification {
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: var(--border-radius-sm);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.3s ease forwards;
+    transform: translateX(100%);
+    opacity: 0;
+    font-family: var(--font-primary);
+}
+
+.notification.success {
+    background: rgba(0, 200, 83, 0.9);
+    border-left: 5px solid #00c853;
+}
+
+.notification.error {
+    background: rgba(255, 79, 79, 0.9);
+    border-left: 5px solid #ff4f4f;
+}
+
+.notification.warning {
+    background: rgba(255, 193, 7, 0.9);
+    border-left: 5px solid #ffc107;
+    color: #333;
+}
+
+.notification i {
+    font-size: 20px;
+    margin-left: 10px;
+}
+
+.notification-close {
+    cursor: pointer;
+    font-size: 18px;
+    margin-right: 5px;
+}
+
+.top-right {
+    top: 20px;
+    right: 20px;
+}
+
+.bottom-right {
+    bottom: 20px;
+    right: 20px;
+}
+
+/* Tooltip */
+.custom-tooltip {
+    position: fixed;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: var(--font-primary);
+    z-index: 9999;
+    pointer-events: none;
+    animation: fadeIn 0.2s ease;
+    white-space: nowrap;
+}
+
+/* انیمیشن‌ها */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideIn {
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+/* رسپانسیو */
+@media (max-width: 768px) {
+    .admin-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .user-table {
+        font-size: 13px;
+    }
+    
+    .user-table th,
+    .user-table td {
+        padding: 12px 8px;
+    }
+    
+    .action-btn {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .action-btn i {
+        font-size: 12px;
+    }
+    
+    .modal-content {
+        margin: 10% auto;
+        width: 95%;
+        padding: 15px;
+    }
+    
+    .filter-form .form-row {
+        flex-direction: column;
+    }
+    
+    .filter-form .form-group {
+        width: 100%;
+    }
+}

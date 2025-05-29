@@ -1,0 +1,502 @@
+/* فونت‌های پروژه */
+@import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts.css');
+
+/* متغیرهای رنگ و طرح‌بندی */
+:root {
+    /* رنگ‌های اصلی */
+    --primary-color: #7c4dff;
+    --primary-hover: #6a40e0;
+    --danger-color: #ff4f4f;
+    --success-color: #00c853;
+    --warning-color: #ffc107;
+    --info-color: #2196f3;
+    
+    /* رنگ‌های متن */
+    --text-primary: #f5f5f5;
+    --text-secondary: #e0e0e0;
+    --text-muted: #bdbdbd;
+    
+    /* رنگ‌های پس‌زمینه */
+    --dark-bg: #121212;
+    --card-bg: rgba(40, 40, 60, 0.8);
+    --card-border: rgba(124, 77, 255, 0.3);
+    --glass-bg: rgba(30, 30, 50, 0.7);
+    --glass-border: rgba(124, 77, 255, 0.4);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    
+    /* اندازه‌ها */
+    --border-radius: 12px;
+    --border-radius-sm: 8px;
+    
+    /* فونت‌ها */
+    --font-primary: 'Vazirmatn', sans-serif;
+    --font-secondary: 'Vazirmatn', sans-serif;
+}
+
+
+
+.background-image {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('../images/background.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: -1;
+    filter: brightness(0.9) contrast(1.05);
+}
+/* استایل‌های پایه برای صفحه مدیریت استف */
+.staff-management-page {
+    background: url('../images/background.jpg') no-repeat center center fixed;
+    background-size: cover;
+    min-height: 100vh;
+    color: var(--text-primary);
+    padding: 20px;
+    direction: rtl;
+    font-family: var(--font-primary);
+}
+
+/* هدر صفحه */
+.staff-management-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.staff-management-title {
+    font-size: 28px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.staff-management-title i {
+    color: var(--primary-color);
+}
+
+/* دکمه‌های مدیریت */
+.staff-management-btn {
+    background: var(--primary-color);
+    color: white;
+    padding: 10px 18px;
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.staff-management-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+}
+
+/* کارت اصلی */
+.staff-management-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    border-radius: var(--border-radius);
+    padding: 25px;
+    margin-bottom: 25px;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+}
+
+.staff-management-card h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-primary);
+}
+
+/* جستجو */
+.staff-search-container {
+    margin-bottom: 20px;
+}
+
+.staff-search-box {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+}
+
+.staff-search-input {
+    width: 100%;
+    padding: 12px 15px 12px 45px;
+    border-radius: var(--border-radius-sm);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    font-family: var(--font-primary);
+    transition: all 0.3s ease;
+}
+
+.staff-search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(124, 77, 255, 0.2);
+}
+
+.staff-search-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* جدول استف‌ها */
+.staff-table-container {
+    overflow-x: auto;
+    border-radius: var(--border-radius-sm);
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(5px);
+}
+
+.staff-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.staff-table thead {
+    background: linear-gradient(135deg, rgba(60, 60, 90, 0.9), rgba(40, 40, 60, 0.9));
+}
+
+.staff-table th {
+    padding: 16px;
+    text-align: center;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+}
+
+.staff-table tbody tr {
+    background: rgba(40, 40, 60, 0.6);
+    transition: all 0.3s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.staff-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.staff-table tbody tr:hover {
+    background: rgba(124, 77, 255, 0.3);
+}
+
+.staff-table td {
+    padding: 14px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* وضعیت‌ها */
+.staff-status {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-right: 5px;
+}
+
+.staff-status.active {
+    background: rgba(0, 200, 83, 0.2);
+    color: var(--success-color);
+}
+
+.staff-status.inactive {
+    background: rgba(255, 79, 79, 0.2);
+    color: var(--danger-color);
+}
+.staff-status.verified {
+    background-color: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+}
+.staff-status.not-verified {
+    background-color: rgba(255, 152, 0, 0.2);
+    color: #FF9800;
+}
+.staff-action-btn.verify { 
+    color: #4CAF50;
+}
+.staff-action-btn.verify.disabled { 
+    color: #9E9E9E; 
+    cursor: not-allowed;
+
+}
+/* دکمه‌های عملیاتی */
+.staff-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    margin: 0 3px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: white;
+    font-size: 14px;
+}
+
+.staff-action-btn:hover {
+    transform: scale(1.1);
+}
+
+.staff-action-btn i {
+    pointer-events: none;
+}
+
+/* رنگ‌بندی دکمه‌های عملیاتی */
+.staff-action-btn.view {
+    background: rgba(33, 150, 243, 0.8);
+}
+
+.staff-action-btn.view:hover {
+    background: #2196F3;
+}
+
+.staff-action-btn.edit {
+    background: rgba(255, 193, 7, 0.8);
+}
+
+.staff-action-btn.edit:hover {
+    background: #FFC107;
+}
+
+.staff-action-btn.reset {
+    background: rgba(156, 39, 176, 0.8);
+}
+
+.staff-action-btn.reset:hover {
+    background: #9C27B0;
+}
+
+.staff-action-btn.activate {
+    background: rgba(76, 175, 80, 0.8);
+}
+
+.staff-action-btn.activate:hover {
+    background: #4CAF50;
+}
+
+.staff-action-btn.suspend {
+    background: rgba(255, 152, 0, 0.8);
+}
+
+.staff-action-btn.suspend:hover {
+    background: #FF9800;
+}
+
+.staff-action-btn.delete {
+    background: rgba(255, 87, 34, 0.8);
+}
+
+.staff-action-btn.delete:hover {
+    background: #FF5722;
+}
+
+/* مدال‌ها */
+.staff-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+    overflow: auto;
+}
+.staff-modal-content {
+    background: var(--card-bg);
+    margin: 2% auto;
+    padding: 25px;
+    border-radius: var(--border-radius);
+    width: 90%;
+    max-width: 700px;
+    max-height: 90vh;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    animation: staffModalFadeIn 0.3s ease;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.staff-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.staff-modal-header {
+    padding: 15px 25px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+
+.staff-modal-header h3 {
+    color: var(--primary-color);
+    font-size: 18px;
+}
+
+.staff-modal-close {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.staff-modal-close:hover {
+    color: var(--danger-color);
+    transform: rotate(90deg);
+}
+
+/* فرم‌های داخل مدال */
+.staff-form-group {
+    margin-bottom: 15px;
+}
+
+.staff-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.staff-form-control {
+    width: 100%;
+    padding: 12px;
+    border-radius: var(--border-radius-sm);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    font-family: var(--font-primary);
+    transition: all 0.3s ease;
+}
+
+.staff-form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.staff-submit-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-family: var(--font-primary);
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 15px;
+}
+
+.staff-submit-btn:hover {
+    background: var(--primary-hover);
+}
+
+.staff-submit-btn.delete {
+    background: var(--danger-color);
+}
+
+.staff-submit-btn.delete:hover {
+    background: #e53935;
+}
+
+.staff-cancel-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 12px 20px;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.staff-cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* جزئیات استف */
+.staff-details-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    min-height: min-content;
+}
+
+.staff-detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.staff-detail-label {
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.staff-detail-value {
+    color: white;
+    text-align: left;
+}
+
+/* انیمیشن‌ها */
+@keyframes staffModalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* رسپانسیو */
+@media (max-width: 768px) {
+    .staff-management-header {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .staff-table th,
+    .staff-table td {
+        padding: 10px 8px;
+        font-size: 13px;
+    }
+    
+    .staff-action-btn {
+        width: 30px;
+        height: 30px;
+        margin: 0 2px;
+    }
+    
+    .staff-modal-content {
+        width: 95%;
+        padding: 15px;
+    }
+}
