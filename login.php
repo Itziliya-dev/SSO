@@ -2,8 +2,12 @@
 require_once __DIR__.'/includes/config.php';
 session_start();
 
-$error = isset($_GET['error']) ? 'نام کاربری یا رمز عبور نادرست است' : '';
-?>
+$error = '';
+if (isset($_SESSION['login_error'])) {
+    $error = $_SESSION['login_error'];
+    // پاک کردن پیام از سشن تا دوباره نمایش داده نشود
+    unset($_SESSION['login_error']);
+}?>
 <!DOCTYPE html>
 <html dir="rtl" lang="fa">
 <head>
