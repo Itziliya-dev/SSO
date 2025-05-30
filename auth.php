@@ -36,7 +36,7 @@ try {
     $result = $stmt_check->get_result()->fetch_assoc();
     $stmt_check->close();
 
-    if ($result['attempts'] > 10) {
+    if ($result['attempts'] > 3) {
         throw new Exception('تعداد تلاش‌های ناموفق بیش از حد مجاز است. لطفاً 15 دقیقه دیگر تلاش کنید.');
     }
 
@@ -49,9 +49,15 @@ try {
         $stmt_log->bind_param("ss", $ip_address, $username);
         $stmt_log->execute();
         $stmt_log->close();
+
+        $_SESSION['new_failed_attempt'] = true;
+        $_SESSION['last_failed_attempt_time'] = time();
         
         throw new Exception($authResult['message']);
     }
+
+    // بعد از خطی که تلاش ناموفق را ثبت می‌کنید:
+
 
     // 3. ایجاد سشن امن
     session_regenerate_id(true);

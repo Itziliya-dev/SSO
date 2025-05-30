@@ -9,6 +9,23 @@ if (!isset($_SESSION['is_owner']) || !$_SESSION['is_owner']) {
     exit();
 }
 
+$login_attempts = [];
+if ($_SESSION['is_owner']) {
+    $conn = getDbConnection();
+    $stmt = $conn->prepare("
+        SELECT username, ip_address, attempt_time 
+        FROM login_attempts 
+        WHERE attempt_time > (NOW() - INTERVAL 24 HOUR)
+        ORDER BY attempt_time DESC
+        LIMIT 10
+    ");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $login_attempts = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+}
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['create_user'])) {
         $username = $_POST['username'];
@@ -65,9 +82,11 @@ $users = $conn->query("SELECT id, username, created_at FROM users ORDER BY creat
          .admin-content {
              padding-top: 20px;
          }
+
     </style>
 </head>
 <body>
+
 
 
 <div id="resetPasswordModal" class="modal">
@@ -164,6 +183,10 @@ $users = $conn->query("SELECT id, username, created_at FROM users ORDER BY creat
         </a>
         <a href="create_user.php" class="btn-panel create-user">
             <i class="fas fa-user-plus"></i> ایجاد کاربر جدید
+        </a>
+        <a href="security_alerts.php" class="btn-panel alert-btn" id="securityAlertsBtn">
+            <i class="fas fa-bell"></i> هشدارهای امنیتی
+            <span class="alert-badge" id="alertBadge" style="display: none"></span>
         </a>
         <a href="dashboard.php" class="btn-panel">
             <i class="fas fa-arrow-left"></i> بازگشت
@@ -322,6 +345,174 @@ $users = $conn->query("SELECT id, username, created_at FROM users ORDER BY creat
     </div>
 </div>
 
+<!-- مدال هشدار تلاش‌های ناموفق -->
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- سیستم هشدارهای امنیتی پیشرفته ---
+    const securityAlertsBtn = document.getElementById('securityAlertsBtn');
+    const alertBadge = document.getElementById('alertBadge');
+    
+    // متغیرهای حالت
+    let unreadAlertsCount = 0;
+    let alertsCheckInterval;
+    let isFirstLoad = true;
+
+    // --- توابع اصلی ---
+
+    // بررسی هشدارهای خوانده نشده
+    const checkUnreadAlerts = async () => {
+        try {
+            const response = await fetch('includes/check_alerts.php');
+            
+            if (!response.ok) {
+                throw new Error(`خطای HTTP! وضعیت: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            updateAlertCount(data.count || 0);
+            
+            return data.count;
+        } catch (error) {
+            console.error('خطا در دریافت هشدارها:', error);
+            return 0;
+        }
+    };
+
+    // به‌روزرسانی تعداد هشدارها
+    const updateAlertCount = (count) => {
+        unreadAlertsCount = count;
+        
+        // به‌روزرسانی نشانگر
+        if (unreadAlertsCount > 0) {
+            alertBadge.style.display = 'flex';
+            alertBadge.textContent = unreadAlertsCount > 9 ? '9+' : unreadAlertsCount;
+            
+            // انیمیشن‌های مختلف بر اساس تعداد هشدارها
+            if (unreadAlertsCount >= 5) {
+                alertBadge.classList.add('critical-alert');
+                securityAlertsBtn.classList.add('critical-alert-btn');
+            } else {
+                alertBadge.classList.add('new-alert');
+                securityAlertsBtn.classList.add('has-alerts');
+            }
+            
+            // برای اولین بار که هشدار می‌آید، یک هشدار صوتی پخش می‌شود
+        } else {
+            alertBadge.style.display = 'none';
+            alertBadge.className = 'alert-badge';
+            securityAlertsBtn.className = 'btn-panel';
+        }
+    };
+
+    // پخش صدای هشدار
+
+    // علامت‌گذاری هشدارها به عنوان خوانده شده
+    const markAlertsAsRead = async () => {
+        try {
+            const response = await fetch('includes/mark_alerts_read.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ mark_as_read: true })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`خطای HTTP! وضعیت: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                updateAlertCount(0);
+            }
+            
+            return data.success;
+        } catch (error) {
+            console.error('خطا در علامت‌گذاری هشدارها:', error);
+            return false;
+        }
+    };
+
+    // --- رویدادها ---
+
+    // کلیک روی دکمه هشدارهای امنیتی
+    securityAlertsBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        
+        // اگر هشدار خوانده‌نشده وجود دارد، اول علامت‌گذاری می‌شود
+        if (unreadAlertsCount > 0) {
+            await markAlertsAsRead();
+        }
+        
+        // رفتن به صفحه هشدارها
+        window.location.href = 'security_alerts.php';
+    });
+
+    // --- مقداردهی اولیه ---
+
+    // بررسی اولیه هشدارها
+    checkUnreadAlerts();
+    
+    // تنظیم بررسی دوره‌ای هر 45 ثانیه
+    alertsCheckInterval = setInterval(checkUnreadAlerts, 10000);
+
+    // پاکسازی interval هنگام خروج از صفحه
+    window.addEventListener('beforeunload', () => {
+        clearInterval(alertsCheckInterval);
+    });
+
+    // --- انیمیشن‌های سفارشی ---
+    const styleElement = document.createElement('style');
+    styleElement.innerHTML = `
+        /* انیمیشن برای هشدارهای معمولی */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        /* انیمیشن برای هشدارهای بحرانی */
+        @keyframes criticalPulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
+            70% { transform: scale(1.2); box-shadow: 0 0 0 15px rgba(255, 0, 0, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
+        }
+        
+        .alert-badge.new-alert {
+            animation: pulse 1.5s infinite;
+        }
+        
+        .alert-badge.critical-alert {
+            animation: criticalPulse 0.8s infinite;
+            background-color: #ff0000;
+            font-size: 14px;
+            width: 24px;
+            height: 24px;
+        }
+        
+        .btn-panel.has-alerts {
+            position: relative;
+            background-color: #ff4f4f;
+        }
+        
+        .btn-panel.critical-alert-btn {
+            animation: shake 0.5s ease-in-out infinite;
+            background-color: #ff0000;
+        }
+        
+        @keyframes shake {
+            0% { transform: translateX(-3px); }
+            25% { transform: translateX(3px); }
+            50% { transform: translateX(-3px); }
+            75% { transform: translateX(3px); }
+            100% { transform: translateX(0); }
+        }
+    `;
+    document.head.appendChild(styleElement);
+});
+</script>
 
 <script src="assets/js/admin.js"></script>
 </body>
