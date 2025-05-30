@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صفحه پیدا نشد - 404</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preload" href="assets/images/background.jpg" as="image">
+    <link rel="preload" href="assets/images/logo.png" as="image">
+    <style>
+        .error-page {
+            text-align: center;
+            max-width: 500px;
+            margin: 0 auto;
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        .error-icon {
+            font-size: 100px;
+            color: var(--warning-color);
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+        
+        .error-title {
+            font-size: 28px;
+            margin-bottom: 15px;
+            color: var(--text-color);
+        }
+        
+        .error-text {
+            font-size: 16px;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 30px;
+        }
+        
+        .error-code {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-family: monospace;
+            color: var(--warning-color);
+            margin-top: 20px;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="background-image"></div>
+    
+    <div class="dashboard-container">
+        <div class="dashboard-content">
+            <div class="error-page">
+                <div class="error-icon">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                
+                <h1 class="error-title">صفحه مورد نظر پیدا نشد</h1>
+                
+                <div class="error-text">
+                    <p>متأسفیم، اما صفحه‌ای که به دنبال آن هستید وجود ندارد یا ممکن است حذف شده باشد.</p>
+                    <p>می‌توانید آدرس را دوباره بررسی کنید یا به صفحه اصلی بازگردید.</p>
+                </div>
+                
+                <div class="error-code">
+                    <i class="fas fa-code"></i> خطای 404
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
