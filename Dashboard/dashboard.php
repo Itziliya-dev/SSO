@@ -1,5 +1,6 @@
 <?php
-require_once __DIR__.'/includes/config.php'; // اطمینان از وجود فایل و مسیر صحیح
+require_once __DIR__.'/../includes/config.php';
+
 session_start();
 
 // بررسی اینکه کاربر وارد شده است یا خیر
@@ -65,8 +66,7 @@ if (!defined('PANEL_URL')) {
     <title>داشبورد | SSO Center</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="preload" href="assets/images/background.jpg" as="image">
-    <link rel="preload" href="assets/images/logo.png" as="image">
+    <link rel="preload" href="/../assets/images/logo.png" as="image">
 
     <style>
         :root {
@@ -109,7 +109,7 @@ if (!defined('PANEL_URL')) {
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('assets/images/background.jpg'); 
+            background-image: url('/../assets/images/background.jpg'); 
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -394,7 +394,7 @@ if (!defined('PANEL_URL')) {
 
     <header class="dashboard-header">
         <a href="dashboard.php" class="header-logo">
-            <img src="assets/images/logo.png" alt="Logo">
+            <img src="/../assets/images/logo.png" alt="Logo">
             <span>SSO Center</span>
         </a>
         <div class="user-menu">
@@ -405,7 +405,7 @@ if (!defined('PANEL_URL')) {
             </button>
             <div class="user-menu-dropdown">
                 <a href="profile.php"><i class="fas fa-user-edit"></i> ویرایش پروفایل</a>
-                <a href="logout.php"><i class="fas fa-sign-out-alt"></i> خروج از حساب</a>
+                <a href="/../logout.php"><i class="fas fa-sign-out-alt"></i> خروج از حساب</a>
             </div>
         </div>
     </header>
@@ -427,7 +427,7 @@ if (!defined('PANEL_URL')) {
         <div class="dashboard-content">
             <div class="logo-wrapper">
                 <div class="logo-circle">
-                    <img src="assets/images/logo.png" alt="Logo" class="logo">
+                    <img src="/../assets/images/logo.png" alt="Logo" class="logo">
                 </div>
             </div>
             <h1>خوش آمدید، <?= htmlspecialchars($username) ?>!</h1>
@@ -457,7 +457,7 @@ if (!defined('PANEL_URL')) {
                     <?php endif; ?>
 
                     <?php if ($is_owner):  ?>
-                        <a href="admin_panel.php" class="service-btn admin-panel-btn">
+                        <a href="/../admin_panel.php" class="service-btn admin-panel-btn">
                             <i class="fas fa-user-shield"></i>
                             <span>پنل مدیریت SSO</span>
                         </a>

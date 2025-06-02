@@ -3,8 +3,8 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-require_once __DIR__.'/includes/config.php';
-require_once __DIR__.'/includes/auth_functions.php'; // برای getDbConnection
+require_once __DIR__.'/../includes/config.php';
+require_once __DIR__.'/../includes/auth_functions.php'; // برای getDbConnection
 
 session_start();
 
@@ -149,7 +149,7 @@ if ($conn) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ویرایش پروفایل | SSO Center</title>
-    <link rel="stylesheet" href="assets/css/style.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/../assets/css/style.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         /* استایل‌های عمومی که در پاسخ داشبورد هم استفاده شد */
@@ -181,7 +181,7 @@ if ($conn) {
         }
         .background-image {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url('assets/images/background.jpg');
+            background-image: url('/../assets/images/background.jpg');
             background-size: cover; background-position: center; z-index: -1;
             filter: brightness(0.6) contrast(1.1);
         }

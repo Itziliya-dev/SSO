@@ -436,13 +436,55 @@ label {
 }
 
 .status-badge.active {
-    background: rgba(124, 77, 255, 0.2);
-    color: var(--primary-color);
+    /* این بخش از بنفش به سبز تغییر می‌کند */
+    background: rgba(0, 200, 83, 0.2); /* پس زمینه سبز نیمه شفاف */
+    color: var(--success-color);       /* متن سبز اصلی */
 }
 
 .status-badge.suspended {
+    /* این بخش از قبل قرمز بود و صحیح است */
     background: rgba(255, 79, 79, 0.2);
     color: var(--danger-color);
+}
+
+.form-hint {
+    display: block; /* برای اینکه در یک خط جدید نمایش داده شود */
+    margin-top: 8px;  /* کمی فاصله از چک‌باکس بالا */
+    font-size: 13px;  /* اندازه فونت کمی کوچکتر */
+    color: var(--text-muted); /* استفاده از رنگ متن کم‌رنگ‌تر برای تمایز */
+    line-height: 1.6; /* فاصله مناسب بین خطوط برای خوانایی بهتر */
+}
+
+.permission-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600; /* کمی ضخیم‌تر برای خوانایی بهتر */
+    font-family: "Vazirmatn", sans-serif;
+    line-height: 1.6;
+    text-align: center;
+}
+
+/* رنگ‌بندی جدید برای هر سطح دسترسی */
+.permission-badge.full-access {
+    background: rgba(40, 167, 69, 0.25); /* پس زمینه سبز نیمه شفاف */
+    color: #28a745;                      /* متن سبز اصلی */
+}
+
+.permission-badge.owner-access {
+    background: rgba(0, 123, 255, 0.2);  /* پس زمینه آبی نیمه شفاف */
+    color: #007bff;                      /* متن آبی اصلی */
+}
+
+.permission-badge.server-access {
+    background: rgba(255, 193, 7, 0.2);   /* پس زمینه زرد نیمه شفاف */
+    color: #ffc107;                      /* متن زرد اصلی */
+}
+
+.permission-badge.no-access {
+    background: rgba(108, 117, 125, 0.2); /* پس زمینه خاکستری نیمه شفاف */
+    color: #6c757d;                       /* متن خاکستری اصلی */
 }
 
 

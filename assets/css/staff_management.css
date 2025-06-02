@@ -425,18 +425,69 @@
     background: #e53935;
 }
 
-.staff-cancel-btn {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    padding: 12px 20px;
-    border-radius: var(--border-radius-sm);
-    cursor: pointer;
-    transition: all 0.3s ease;
+/* ====================================================== */
+/* ===== دیزاین کاملا جدید برای دکمه‌های تایید و انصراف ===== */
+/* ====================================================== */
+
+/* کانتینر نگهدارنده دکمه‌ها */
+.form-actions {
+    display: flex;
+    justify-content: flex-end; /* چیدمان دکمه‌ها در سمت راست */
+    gap: 15px;                 /* افزایش فاصله بین دکمه‌ها */
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1); /* خط جداکننده زیبا */
 }
 
-.staff-cancel-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+/* استایل پایه و مشترک برای هر دو دکمه */
+.form-actions > .staff-submit-btn,
+.form-actions > .staff-cancel-btn {
+    /* ساختار و تایپوگرافی */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: var(--font-primary);
+    font-weight: 600; /* کمی ضخیم‌تر برای خوانایی بهتر */
+    font-size: 15px;
+    padding: 10px 24px; /* پدینگ حرفه‌ای‌تر */
+    border-radius: 10px; /* گردی بیشتر گوشه‌ها */
+    cursor: pointer;
+    border: 2px solid transparent; /* جلوگیری از پرش در هاور */
+    transition: all 0.25s ease-out;
+    
+    /* ریست کردن استایل‌های قبلی */
+    width: auto;
+    margin-top: 0;
+}
+
+
+/* --- دیزاین دکمه اصلی (تایید حذف) --- */
+.form-actions .staff-submit-btn.delete {
+    background: linear-gradient(145deg, #ff5f6d, #ff4f4f); /* گرادینت قرمز جذاب */
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.form-actions .staff-submit-btn.delete:hover {
+    transform: translateY(-3px); /* افکت شناور شدن */
+    box-shadow: 0 6px 20px rgba(255, 79, 79, 0.4); /* سایه درخشان‌تر */
+    background: linear-gradient(145deg, #ff6b7a, #ff5c5c); /* کمی روشن‌تر در هاور */
+}
+
+
+/* --- دیزاین دکمه ثانویه (انصراف) - سبک Ghost/Outline --- */
+.form-actions .staff-cancel-btn {
+    background-color: transparent;
+    color: var(--text-secondary, #e0e0e0);
+    border-color: rgba(255, 255, 255, 0.5); /* حاشیه نیمه‌شفاف */
+}
+
+.form-actions .staff-cancel-btn:hover {
+    transform: translateY(-3px); /* افکت شناور شدن هماهنگ */
+    background-color: rgba(255, 255, 255, 0.1); /* پس‌زمینه شیشه‌ای در هاور */
+    color: white;
+    border-color: white;
 }
 
 /* جزئیات استف */

@@ -1,10 +1,13 @@
 <?php
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 require_once __DIR__.'/includes/config.php';
-require_once __DIR__.'/includes/auth_functions.php'; // لازم برای getDbConnection
+require_once __DIR__.'/includes/auth_functions.php';
 
 session_start();
 
-// بررسی دسترسی ادمین
 if (!isset($_SESSION['is_owner']) || !$_SESSION['is_owner']) {
     header('Location: login.php');
     exit();
@@ -12,62 +15,64 @@ if (!isset($_SESSION['is_owner']) || !$_SESSION['is_owner']) {
 
 $message = '';
 $message_type = '';
+$conn = null; // اتصال را در اینجا null می‌کنیم تا در finally قابل بررسی باشد
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $conn = getDbConnection();
+    try {
+        $conn = getDbConnection(); // اتصال در ابتدای try باز می‌شود
 
-    $username = trim($_POST['username']);
-    $is_staff = isset($_POST['is_staff']) ? 1 : 0;
-    $password = $_POST['password'];
-    $email = trim($_POST['email']) ?: null;
-    $phone = trim($_POST['phone']) ?: null;
-    $fullname = trim($_POST['fullname']) ?: $username; // نام کامل، پیش‌فرض نام کاربری
+        $username = trim($_POST['username']);
+        // $is_staff در پایین‌تر بر اساس چک‌باکس تعیین می‌شود
+        $password = $_POST['password'];
+        $email = trim($_POST['email']) ?: null;
+        $phone = trim($_POST['phone']) ?: null;
+        $fullname = trim($_POST['fullname']) ?: $username;
 
-    $has_user_panel = isset($_POST['access_user_panel']) ? 1 : 0;
-    $is_owner = isset($_POST['access_admin_panel']) ? 1 : 0;
-    $is_staff = isset($_POST['is_staff']) ? 1 : 0;
+        $has_user_panel = isset($_POST['access_user_panel']) ? 1 : 0;
+        $is_owner_permission = isset($_POST['access_admin_panel']) ? 1 : 0; // نام متغیر تغییر کرد تا با is_staff تداخل نداشته باشد
+        $is_staff_checkbox = isset($_POST['is_staff']) ? 1 : 0; // مقدار چک‌باکس استف
 
-    // اعتبار سنجی
-    if (empty($username) || empty($password)) {
-        $message = "نام کاربری و رمز عبور الزامی هستند.";
-        $message_type = 'error';
-    } else {
-        $hashed_password = password_hash($password, PASSWORD_BCRYPT);
-        try {
-            if ($is_staff) {
-                // ***** ذخیره در staff-manage *****
-                // ستون password و username اضافه شد
+        if (empty($username) || empty($password)) {
+            $message = "نام کاربری و رمز عبور الزامی هستند.";
+            $message_type = 'error';
+        } else {
+            $hashed_password = password_hash($password, PASSWORD_BCRYPT);
+            
+            // $conn->begin_transaction(); // اگر نیاز به تراکنش دارید (برای عملیات پیچیده‌تر)
+
+            if ($is_staff_checkbox) {
                 $stmt = $conn->prepare("INSERT INTO `staff-manage` (username, password, email, phone, fullname, is_active) VALUES (?, ?, ?, ?, ?, 1)");
                 $stmt->bind_param("sssss", $username, $hashed_password, $email, $phone, $fullname);
                 $message_text = "استف";
-
             } else {
-                // ***** ذخیره در users *****
+                // برای کاربر عادی، is_staff همیشه 0 است
                 $stmt = $conn->prepare("INSERT INTO users (username, password, email, phone, fullname, is_owner, has_user_panel, is_staff, status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 'active', 'manual')");
-                $stmt->bind_param("sssssii", $username, $hashed_password, $email, $phone, $fullname, $is_owner, $has_user_panel);
+                $stmt->bind_param("sssssii", $username, $hashed_password, $email, $phone, $fullname, $is_owner_permission, $has_user_panel);
                 $message_text = "کاربر";
             }
 
             if ($stmt->execute()) {
+                // $conn->commit(); // اگر از تراکنش استفاده می‌کنید
                 $message = "$message_text '$username' با موفقیت ایجاد شد.";
                 $message_type = 'success';
             } else {
                  throw new Exception("خطا در ایجاد $message_text: " . $stmt->error);
             }
             $stmt->close();
-            $conn->close();
-
-
-        } catch (Exception $e) {
-            $conn->rollback();
-            $message = "خطا: " . $e->getMessage();
-            // بررسی خطای تکراری بودن نام کاربری
-            if ($conn->errno == 1062) {
-                 $message = "خطا: نام کاربری '$username' قبلاً استفاده شده است.";
-            }
-            $message_type = 'error';
+            // $conn->close(); // این خط از اینجا حذف می‌شود
         }
-        $conn->close();
+    } catch (Exception $e) {
+        // if ($conn) $conn->rollback(); // اگر از تراکنش استفاده می‌کنید و اتصال هنوز باز است
+        $message = "خطا: " . $e->getMessage();
+        if (isset($conn) && $conn->errno == 1062) { // بررسی می‌کنیم $conn تعریف شده باشد
+             $message = "خطا: نام کاربری '$username' قبلاً استفاده شده است.";
+        }
+        $message_type = 'error';
+    } finally {
+        // این بلوک همیشه اجرا می‌شود
+        if ($conn) { // فقط اگر اتصال باز باشد، آن را می‌بندیم
+            $conn->close();
+        }
     }
 }
 ?>
@@ -79,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ایجاد کاربر جدید | پنل مدیریت</title>
     <link rel="stylesheet" href="assets/css/admin.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         body { background-color: #0a0a1a; } /* یا استفاده از background-image */
         .create-user-container { max-width: 700px; margin: 50px auto; }
@@ -148,6 +153,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="checkbox" name="is_staff" value="1" id="is_staff_checkbox">
                 این کاربر استف است
             </label>
+            <small class="form-hint">
+                        توصیه می شود از استف مورد نظر درخواست کنید که از پنل، درخواست خود را ارسال کند تا تمامی مراحل ثبت اطلاعات به طور اتوماتیک انجام شود و در سیستم اختلالی ایجاد نشود.
+        </smaill>
              </div>
         <div class="checkbox-group" id="user_permissions_group"> <h4>دسترسی‌های کاربر عادی:</h4>
             <label>

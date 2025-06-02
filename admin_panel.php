@@ -184,11 +184,14 @@ $users = $conn->query("SELECT id, username, created_at FROM users ORDER BY creat
         <a href="create_user.php" class="btn-panel create-user">
             <i class="fas fa-user-plus"></i> ایجاد کاربر جدید
         </a>
+        <a href="staff_archive.php" class="btn-panel">
+            <i class="fas fa-archive"></i> ارشیو
+        </a>
         <a href="security_alerts.php" class="btn-panel alert-btn" id="securityAlertsBtn">
             <i class="fas fa-bell"></i> هشدارهای امنیتی
             <span class="alert-badge" id="alertBadge" style="display: none"></span>
         </a>
-        <a href="dashboard.php" class="btn-panel">
+        <a href="/Dashboard/dashboard.php" class="btn-panel">
             <i class="fas fa-arrow-left"></i> بازگشت
         </a>
       </div>
@@ -196,48 +199,7 @@ $users = $conn->query("SELECT id, username, created_at FROM users ORDER BY creat
     </div>
 </div>
     
-    <div class="admin-content">
-        <!-- فرم ایجاد کاربر -->
-        <div class="admin-card create-user-card">
-            <h2>
-                <i class="fas fa-user-plus"></i>
-                ایجاد کاربر جدید
-            </h2>
-            
-            <form method="POST" class="user-form">
-                <div class="form-group">
-                    <label>نام کاربری:</label>
-                    <input type="text" name="username" class="form-control glass-input" required>
-                </div>
-                
-                <div class="form-group">
-                    <label>رمز عبور:</label>
-                    <input type="password" name="password" class="form-control glass-input" required>
-                </div>
-                
-                <div class="form-group">
-                    <label>ایمیل (اختیاری):</label>
-                    <input type="email" name="email" class="form-control glass-input">
-                </div>
-                
-                <div class="form-group">
-                    <label>تلفن (اختیاری):</label>
-                    <input type="tel" name="phone" class="form-control glass-input">
-                </div>
-                
-                <button type="submit" name="create_user" class="submit-btn">
-                    <i class="fas fa-save"></i> ایجاد کاربر
-                </button>
-                
-                <?php if(isset($success)): ?>
-                <div class="success-message">
-                    <i class="fas fa-check-circle"></i>
-                    <?= $success ?>
-                </div>
-                <?php endif; ?>
-            </form>
-        </div>
-        
+
         <!-- لیست کاربران -->
 
 

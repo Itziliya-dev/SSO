@@ -23,11 +23,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_staff'])) {
         $stmt->bind_param("i", $staff_id);
         $stmt->execute();
         
-        $_SESSION['success_message'] = "استف با موفقیت حذف شد";
+        $_SESSION['success_message'] = "استف با موفقیت دیموت شد";
         header("Location: staff_management.php");
         exit();
     } catch (Exception $e) {
-        $_SESSION['error_message'] = "خطا در حذف استف: " . $e->getMessage();
+        $_SESSION['error_message'] = "خطا در دیموت استف: " . $e->getMessage();
     }
 }
 
@@ -370,18 +370,18 @@ unset($_SESSION['success_message'], $_SESSION['error_message']);
 <div id="deleteStaffModal" class="staff-modal">
     <div class="staff-modal-content">
         <div class="staff-modal-header">
-            <h3>حذف استف</h3>
+            <h3>دیموت استف</h3>
             <span class="staff-modal-close">&times;</span>
         </div>
         <div class="staff-modal-body">
-            <p>آیا مطمئن هستید که می‌خواهید این استف را حذف کنید؟ این عمل قابل بازگشت نیست.</p>
+            <p>آیا مطمئن هستید که می‌خواهید این استف را دیموت کنید؟ این عمل قابل بازگشت نیست.</p>
             
             <form id="deleteStaffForm" method="POST" action="staff_management.php">
                 <input type="hidden" name="staff_id" id="delete-staff-id">
                 <input type="hidden" name="delete_staff" value="1">
                 
                 <div class="staff-form-group">
-                    <label for="delete-reason">دلیل حذف (اختیاری)</label>
+                    <label for="delete-reason">دلیل دیموت (اختیاری)</label>
                     <textarea id="delete-reason" name="reason" class="staff-form-control" rows="3"></textarea>
                 </div>
                 
@@ -390,7 +390,7 @@ unset($_SESSION['success_message'], $_SESSION['error_message']);
                         <i class="fas fa-times"></i> انصراف
                     </button>
                     <button type="submit" class="staff-submit-btn delete">
-                        <i class="fas fa-trash"></i> تایید حذف
+                        <i class="fas fa-trash"></i> دیموت
                     </button>
                 </div>
             </form>

@@ -116,7 +116,7 @@ try {
     ]);
 
     // هدایت کاربر به داشبورد
-    header('Location: dashboard.php');
+    header('Location: /Dashboard/dashboard.php');
     exit();
 
 } catch (Exception $e) {
