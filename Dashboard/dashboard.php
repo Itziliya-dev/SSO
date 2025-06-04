@@ -1,15 +1,21 @@
 <?php
-require_once __DIR__.'/../includes/config.php';
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+require_once __DIR__.'/../includes/config.php'; // مسیر صحیح به config.php
+require_once __DIR__.'/../includes/database.php'; // <--- این خط را اضافه کنید اگر تابع در این فایل است
+// تابع getDbConnection() باید در config.php یا یک فایل include شده دیگر در دسترس باشد
 
 session_start();
 
 // بررسی اینکه کاربر وارد شده است یا خیر
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: /../login.php'); // مسیر صحیح به صفحه لاگین شما
     exit();
 }
 
 // خواندن متغیرهای عمومی از سشن
+$user_id_session = $_SESSION['user_id']; // آیدی کاربر از سشن برای کوئری دیتابیس
 $username = $_SESSION['username'] ?? 'کاربر';
 $user_type = $_SESSION['user_type'] ?? 'user'; // 'user' یا 'staff'
 
@@ -22,14 +28,14 @@ $is_staff = false;
 $staff_permissions = 'فاقد مقام';
 $staff_is_verify = 0; // 0: تایید نشده, 1: تایید شده
 $staff_last_login_formatted = 'نامشخص';
+$discord_connection_status_html = ''; // برای نگهداری HTML وضعیت اتصال دیسکورد
 
 // تنظیم متغیرها بر اساس نوع کاربر از سشن
 if ($user_type === 'user') {
     $is_owner = $_SESSION['is_owner'] ?? false;
-    $has_user_panel = $_SESSION['has_user_panel'] ?? true;
-    $is_staff = $_SESSION['is_staff'] ?? 0; // اگر کاربر عادی، بتواند استف هم باشد
-    // اگر کاربر عادی is_staff بود و نیاز به نمایش اطلاعات بیشتر داشت،
-    // باید آن اطلاعات از دیتابیس خوانده یا در auth.php در سشن گذاشته شود.
+    $has_user_panel = $_SESSION['has_user_panel'] ?? true; // این خط را بر اساس منطق خودتان ممکن است نیاز به تغییر داشته باشد
+    // $is_staff = $_SESSION['is_staff'] ?? 0; // اگر کاربر عادی می‌تواند همزمان استف هم باشد
+                                            // در این حالت، منطق خواندن اطلاعات استف باید اینجا هم بررسی شود
 } elseif ($user_type === 'staff') {
     $is_staff = true;
     $staff_permissions = $_SESSION['permissions'] ?? 'فاقد مقام';
@@ -38,23 +44,47 @@ if ($user_type === 'user') {
 
     if ($staff_last_login_raw) {
         try {
-            // اطمینان از اینکه فرمت تاریخ از دیتابیس صحیح است
             $date = new DateTime($staff_last_login_raw);
             $staff_last_login_formatted = $date->format('Y/m/d ساعت H:i');
         } catch (Exception $e) {
-            // اگر فرمت تاریخ مشکل داشت، همان مقدار خام را نمایش بده یا یک پیام خطا
             $staff_last_login_formatted = 'تاریخ نامعتبر';
             error_log("Error formatting staff last login date: " . $e->getMessage());
         }
     } else {
         $staff_last_login_formatted = 'اولین ورود یا نامشخص';
     }
+
+    // <--- واکشی اطلاعات اتصال دیسکورد برای استف --->
+    $conn = getDbConnection(); // تابع اتصال به دیتابیس شما
+    $stmt_discord_conn = $conn->prepare("SELECT discord_conn FROM `staff-manage` WHERE user_id = ? LIMIT 1");
+    if ($stmt_discord_conn) {
+        $stmt_discord_conn->bind_param("i", $user_id_session);
+        $stmt_discord_conn->execute();
+        $result_discord_conn = $stmt_discord_conn->get_result();
+        if ($staff_discord_info = $result_discord_conn->fetch_assoc()) {
+            if (isset($staff_discord_info['discord_conn']) && (int)$staff_discord_info['discord_conn'] === 1) {
+                $discord_connection_status_html = "<span class=\"status-value status-verified\"><i class=\"fab fa-discord\"></i> متصل</span>";
+            } else {
+                $discord_connection_status_html = "<span class=\"status-value status-not-verified\"><i class=\"fab fa-discord\"></i> متصل نشده</span>";
+            }
+        } else {
+            // اگر رکوردی در staff-manage برای user_id پیدا نشد (که نباید اتفاق بیفتد اگر user_type='staff' است)
+            $discord_connection_status_html = "<span class=\"status-value status-not-verified\"><i class=\"fab fa-discord\"></i> وضعیت نامشخص</span>";
+        }
+        $stmt_discord_conn->close();
+    } else {
+        // خطا در prepare statement
+        error_log("Failed to prepare statement for discord_conn: " . $conn->error);
+        $discord_connection_status_html = "<span class=\"status-value status-not-verified\"><i class=\"fab fa-discord\"></i> خطا در بررسی</span>";
+    }
+    // $conn->close(); // اتصال را نبندید اگر در ادامه صفحه باز هم از آن استفاده می‌شود
+    // <--- پایان واکشی اطلاعات اتصال دیسکورد --->
 }
 
+
 // تعریف ثابت‌های URL (مطمئن شوید در config.php تعریف شده‌اند)
-// اگر در config.php نیستند، اینجا به عنوان مثال تعریف می‌کنیم:
 if (!defined('PANEL_URL')) {
-    define('PANEL_URL', 'https://dev-panel.itziliya-dev.ir'); // آدرس پنل کاربری
+    define('PANEL_URL', 'https://dev-panel.itziliya-dev.ir');
 }
 
 ?>
@@ -116,7 +146,6 @@ if (!defined('PANEL_URL')) {
             z-index: -1;
             filter: brightness(0.6) contrast(1.1); 
         }
-
         
         .dashboard-header {
             background: var(--glass-bg);
@@ -215,15 +244,15 @@ if (!defined('PANEL_URL')) {
             width: 100%;
             z-index: 999;
             display: flex;
-            justify-content: space-around;
+            justify-content: space-around; /* تغییر به space-around یا space-between */
             align-items: center;
             flex-wrap: wrap;
             box-shadow: 0 3px 8px rgba(0,0,0,0.25);
         }
-        .staff-status-bar span { margin: 5px 12px; display: inline-flex; align-items: center;}
+        .staff-status-bar span { margin: 5px 10px; display: inline-flex; align-items: center;} /* کاهش margin برای جا شدن بهتر */
         .staff-status-bar .status-label { font-weight: 500; color: var(--text-muted-color); margin-left: 5px; }
         .staff-status-bar .status-value { font-weight: 600; color: var(--text-color); }
-        .staff-status-bar .status-value .fas { margin-right: 6px;  font-size: 0.95em; }
+        .staff-status-bar .status-value .fas, .staff-status-bar .status-value .fab { margin-right: 6px;  font-size: 0.95em; } /* اضافه کردن fab برای آیکون دیسکورد */
         .staff-status-bar .status-verified { color: var(--verified-color); }
         .staff-status-bar .status-not-verified { color: var(--not-verified-color); }
 
@@ -310,7 +339,9 @@ if (!defined('PANEL_URL')) {
             transition: transform 0.2s ease-out, background-color 0.3s, box-shadow 0.3s;
             border: 1px solid transparent; 
         }
-        .service-btn .fas { font-size: 20px; margin-right: 5px; }
+        .service-btn .fas { font-size: 20px; margin-right: 5px; } /* برای سازگاری، این را نگه می‌داریم */
+        .service-btn .fab { font-size: 20px; margin-right: 5px; } /* برای آیکون دیسکورد */
+
 
         .service-btn.user-panel-btn { 
             background: var(--primary-color);
@@ -376,7 +407,7 @@ if (!defined('PANEL_URL')) {
 
 
             .dashboard-container {
-                padding-top: calc(50px + 60px + 20px); 
+                padding-top: calc(50px + 60px + 20px); /* با توجه به ارتفاع staff-status-bar در موبایل */
                 padding-left: 10px;
                 padding-right: 10px;
             }
@@ -387,6 +418,50 @@ if (!defined('PANEL_URL')) {
             .service-buttons { grid-template-columns: 1fr;  }
             .service-btn { font-size: 15px; padding: 14px; }
         }
+        /* استایل‌های جدید برای باکس اتصال دیسکورد که در پاسخ قبلی پیشنهاد شد */
+        /* اگر آنها را در فایل CSS خارجی قرار داده‌اید، اینجا نیازی نیست */
+        .discord-status-box {
+            background-color: rgba(42, 50, 66, 0.8); /* رنگ تیره‌تر شیشه‌ای */
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(75, 85, 99, 0.4);
+            border-radius: .375rem;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: var(--text-color); /* استفاده از رنگ متن اصلی */
+        }
+        .discord-status-box h5 {
+            margin-bottom: 0.75rem;
+            color: #fff; /* رنگ سفید برای عنوان */
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .discord-status-box p {
+            margin-bottom: 0;
+            font-size: 1rem;
+            color: var(--text-muted-color); /* رنگ متن کم‌رنگ */
+        }
+        .discord-status-box .status-value { /* این برای خود متن وضعیت در staff-status-bar هم استفاده می‌شود */
+            font-weight: 600;
+        }
+        .discord-status-box .status-verified {
+            color: var(--verified-color) !important;
+        }
+        .discord-status-box .status-not-verified {
+            color: var(--not-verified-color) !important;
+        }
+        .discord-status-box .fab.fa-discord { /* استایل خاص برای آیکون دیسکورد */
+            margin-left: 8px; /* فاصله از متن (برای فارسی) */
+            color: #7289DA; /* رنگ برند دیسکورد */
+            font-size: 1.2em;
+        }
+        .discord-status-box .fas.fa-check-circle,
+        .discord-status-box .fas.fa-times-circle,
+        .discord-status-box .fas.fa-question-circle { /* برای آیکون‌های وضعیت */
+             margin-left: 6px;
+             font-size: 1em;
+        }
+
     </style>
 </head>
 <body>
@@ -416,11 +491,18 @@ if (!defined('PANEL_URL')) {
             <span>
                 <span class="status-label"><i class="fas fa-shield-alt"></i> وضعیت احراز:</span>
                 <span class="status-value <?= $staff_is_verify ? 'status-verified' : 'status-not-verified' ?>">
-                    <?= $staff_is_verify ? '<i class="fas fa-check-circle"></i> تایید شده (سطح 2)' : '<i class="fas fa-hourglass-half"></i> در انتظار تایید (سطح 1)' ?>
+                    <?= $staff_is_verify ? '<i class="fas fa-check-circle"></i> تایید شده' : '<i class="fas fa-hourglass-half"></i> در انتظار تایید' ?>
                 </span>
             </span>
             <span><span class="status-label"><i class="fas fa-history"></i> آخرین ورود:</span> <span class="status-value"><?= htmlspecialchars($staff_last_login_formatted) ?></span></span>
-        </div>
+            
+            <?php if (!empty($discord_connection_status_html)): ?>
+                <span>
+                    <span class="status-label"><i class="fab fa-discord"></i> اتصال دیسکورد:</span> 
+                    <?php echo $discord_connection_status_html; ?>
+                </span>
+            <?php endif; ?>
+            </div>
     <?php endif; ?>
 
     <div class="dashboard-container">
@@ -438,6 +520,11 @@ if (!defined('PANEL_URL')) {
                  <p class="welcome-text" style="color: var(--not-verified-color);">حساب کاربری استف شما هنوز توسط منیجر ها  تایید نشده است. لطفاً منتظر بمانید.</p>
             <?php elseif ($is_staff && $staff_is_verify) : ?>
                  <p class="welcome-text" style="color: var(--verified-color);">حساب کاربری استف شما فعال و تایید شده است.</p>
+                 <?php if ($is_staff && (empty($discord_connection_status_html) || strpos($discord_connection_status_html, 'status-not-verified') !== false)): ?>
+                    <p class="welcome-text" style="color: var(--not-verified-color); font-size: 0.9em; margin-top: -20px;">
+                        <i class="fas fa-exclamation-triangle"></i> برای استفاده از تمامی امکانات، لطفاً اکانت دیسکورد خود را با دستور <code>/connect</code> در سرور متصل کنید.
+                    </p>
+                 <?php endif; ?>
             <?php endif; ?>
 
 
@@ -466,8 +553,9 @@ if (!defined('PANEL_URL')) {
 
                     <?php
                         if ($is_staff && $staff_is_verify) {
-                            if (strpos(strtolower($staff_permissions ?? ''), 'dev') !== false) {
-                                echo '<a href="/server_management/server_control.php" class="service-btn staff-specific-btn"><i class="fas fa-headset"></i><span>پنل کنترل سرور استف</span></a>';
+                            // اگر staff_permissions در سشن ست شده باشد
+                            if (isset($_SESSION['permissions']) && strpos(strtolower($_SESSION['permissions']), 'dev') !== false) {
+                                echo '<a href="/server_management/server_control.php" class="service-btn staff-specific-btn"><i class="fas fa-server"></i><span>کنترل سرور (مخصوص DEV)</span></a>';
                                 $has_services_to_show = true;
                             }
                         }
