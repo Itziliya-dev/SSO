@@ -1,5 +1,4 @@
 <?php
-
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -15,177 +14,188 @@ if (!isset($_SESSION['is_owner']) || !$_SESSION['is_owner']) {
 
 $message = '';
 $message_type = '';
-$conn = null; // اتصال را در اینجا null می‌کنیم تا در finally قابل بررسی باشد
+// مقداردهی اولیه متغیرها برای جلوگیری از خطا
+$username_val = '';
+$fullname_val = '';
+$email_val = '';
+$phone_val = '';
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $conn = null;
     try {
-        $conn = getDbConnection(); // اتصال در ابتدای try باز می‌شود
+        $conn = getDbConnection();
 
         $username = trim($_POST['username']);
-        // $is_staff در پایین‌تر بر اساس چک‌باکس تعیین می‌شود
         $password = $_POST['password'];
         $email = trim($_POST['email']) ?: null;
         $phone = trim($_POST['phone']) ?: null;
         $fullname = trim($_POST['fullname']) ?: $username;
 
+        // ذخیره مقادیر برای نمایش مجدد در فرم در صورت خطا
+        $username_val = $username;
+        $fullname_val = $fullname;
+        $email_val = $email;
+        $phone_val = $phone;
+
         $has_user_panel = isset($_POST['access_user_panel']) ? 1 : 0;
-        $is_owner_permission = isset($_POST['access_admin_panel']) ? 1 : 0; // نام متغیر تغییر کرد تا با is_staff تداخل نداشته باشد
-        $is_staff_checkbox = isset($_POST['is_staff']) ? 1 : 0; // مقدار چک‌باکس استف
+        $is_owner_permission = isset($_POST['access_admin_panel']) ? 1 : 0;
+        $is_staff_checkbox = isset($_POST['is_staff']) ? 1 : 0;
 
         if (empty($username) || empty($password)) {
-            $message = "نام کاربری و رمز عبور الزامی هستند.";
-            $message_type = 'error';
-        } else {
-            $hashed_password = password_hash($password, PASSWORD_BCRYPT);
-
-            // $conn->begin_transaction(); // اگر نیاز به تراکنش دارید (برای عملیات پیچیده‌تر)
-
-            if ($is_staff_checkbox) {
-                $stmt = $conn->prepare("INSERT INTO `staff-manage` (username, password, email, phone, fullname, is_active) VALUES (?, ?, ?, ?, ?, 1)");
-                $stmt->bind_param("sssss", $username, $hashed_password, $email, $phone, $fullname);
-                $message_text = "استف";
-            } else {
-                // برای کاربر عادی، is_staff همیشه 0 است
-                $stmt = $conn->prepare("INSERT INTO users (username, password, email, phone, fullname, is_owner, has_user_panel, is_staff, status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 'active', 'manual')");
-                $stmt->bind_param("sssssii", $username, $hashed_password, $email, $phone, $fullname, $is_owner_permission, $has_user_panel);
-                $message_text = "کاربر";
-            }
-
-            if ($stmt->execute()) {
-                // $conn->commit(); // اگر از تراکنش استفاده می‌کنید
-                $message = "$message_text '$username' با موفقیت ایجاد شد.";
-                $message_type = 'success';
-            } else {
-                throw new Exception("خطا در ایجاد $message_text: " . $stmt->error);
-            }
-            $stmt->close();
-            // $conn->close(); // این خط از اینجا حذف می‌شود
+            throw new Exception("نام کاربری و رمز عبور الزامی هستند.");
         }
+        
+        $hashed_password = password_hash($password, PASSWORD_BCRYPT);
+
+        if ($is_staff_checkbox) {
+            // [اصلاح شده] باگ اصلی اینجا بود. تعداد ستون‌ها و متغیرها باید یکی باشد.
+            $stmt = $conn->prepare("INSERT INTO `staff-manage` (username, password, email, phone, fullname, is_active, is_verify) VALUES (?, ?, ?, ?, ?, 1, 1)");
+            $stmt->bind_param("sssss", $username, $hashed_password, $email, $phone, $fullname);
+            $message_text = "استف";
+        } else {
+            $stmt = $conn->prepare("INSERT INTO users (username, password, email, phone, fullname, is_owner, has_user_panel, is_staff, status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 'active', 'manual')");
+            $stmt->bind_param("sssssii", $username, $hashed_password, $email, $phone, $fullname, $is_owner_permission, $has_user_panel);
+            $message_text = "کاربر";
+        }
+
+        if ($stmt->execute()) {
+            $message = "$message_text '$username' با موفقیت ایجاد شد.";
+            $message_type = 'success';
+            // پاک کردن مقادیر پس از موفقیت
+            $username_val = $fullname_val = $email_val = $phone_val = '';
+        } else {
+            throw new Exception($stmt->error);
+        }
+        $stmt->close();
+
     } catch (Exception $e) {
-        // if ($conn) $conn->rollback(); // اگر از تراکنش استفاده می‌کنید و اتصال هنوز باز است
         $message = "خطا: " . $e->getMessage();
-        if (isset($conn) && $conn->errno == 1062) { // بررسی می‌کنیم $conn تعریف شده باشد
+        if (isset($conn) && $conn->errno == 1062) {
             $message = "خطا: نام کاربری '$username' قبلاً استفاده شده است.";
         }
         $message_type = 'error';
     } finally {
-        // این بلوک همیشه اجرا می‌شود
-        if ($conn) { // فقط اگر اتصال باز باشد، آن را می‌بندیم
-            $conn->close();
-        }
+        if ($conn) $conn->close();
     }
 }
-?>
 
+// برای سایدبار
+$currentPage = 'create_user'; // شناسه صفحه فعلی
+$pending_requests_count = 0; // مقدار پیش‌فرض
+$conn_sidebar = getDbConnection();
+if ($conn_sidebar) {
+    $pending_requests_count = $conn_sidebar->query("SELECT COUNT(id) as count FROM `registration_requests` WHERE status = 'pending'")->fetch_assoc()['count'];
+    $conn_sidebar->close();
+}
+?>
 <!DOCTYPE html>
 <html dir="rtl" lang="fa">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ایجاد کاربر جدید | پنل مدیریت</title>
-    <link rel="stylesheet" href="/../assets/css/admin.css">
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600&display=swap" rel="stylesheet">
-    <style>
-        body { background-color: #0a0a1a; } /* یا استفاده از background-image */
-        .create-user-container { max-width: 700px; margin: 50px auto; }
-        .form-control { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.1); color: white; }
-        .checkbox-group { margin-bottom: 20px; background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px;}
-        .checkbox-group label { display: block; margin-bottom: 10px; cursor: pointer; }
-        .checkbox-group input { margin-left: 10px; }
-        .submit-btn { background: #27ae60; color: white; padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
-        .submit-btn:hover { background: #219a52; }
-        .message { padding: 15px; margin-bottom: 20px; border-radius: 8px; font-size: 14px; }
-        .message.success { background-color: rgba(0, 200, 83, 0.3); color: #00c853; border: 1px solid #00c853; }
-        .message.error { background-color: rgba(255, 107, 107, 0.3); color: #ff6b6b; border: 1px solid #ff6b6b; }
-    </style>
+    <link rel="stylesheet" href="../assets/css/admin.css">
+    <link rel="stylesheet" href="../assets/css/admin_dashboard_redesign.css">
+    <link rel="stylesheet" href="../assets/css/custom-dialog.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-<div class="create-user-container">
-    <div class="admin-card">
-        <h2>
-            <i class="fas fa-user-plus"></i>
-            ایجاد کاربر جدید
-        </h2>
 
-        <?php if ($message): ?>
-            <div class="message <?= $message_type ?>">
-                <?= htmlspecialchars($message) ?>
-            </div>
-        <?php endif; ?>
+<div class="admin-layout">
+    
+    <?php include __DIR__.'/../includes/_sidebar.php'; // <-- فراخوانی سایدبار مشترک --> ?>
+    
+    <main class="main-content">
+        <header class="main-header">
+            <h1 class="header-title"><i class="fas fa-user-plus"></i> ایجاد کاربر جدید</h1>
+        </header>
 
-        <form method="POST">
-            <div class="form-group">
-                <label>نام کاربری:</label>
-                <input type="text" name="username" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label>رمز عبور:</label>
-                <input type="password" name="password" class="form-control" required>
-            </div>
-             <div class="form-group">
-                <label>نام کامل (اختیاری):</label>
-                <input type="text" name="fullname" class="form-control">
-            </div>
-            <div class="form-group">
-                <label>ایمیل (اختیاری):</label>
-                <input type="email" name="email" class="form-control">
-            </div>
-            <div class="form-group">
-                <label>تلفن (اختیاری):</label>
-                <input type="tel" name="phone" class="form-control">
-            </div>
+        <div class="admin-card">
+            <?php if ($message): ?>
+                <div class="notification <?= $message_type == 'success' ? 'success' : 'error' ?>" style="opacity:1; transform:none; margin-bottom:20px;">
+                    <i class="fas fa-<?= $message_type == 'success' ? 'check-circle' : 'exclamation-circle' ?>"></i>
+                    <span><?= htmlspecialchars($message) ?></span>
+                </div>
+            <?php endif; ?>
 
-            <div class="checkbox-group">
-                <h4>دسترسی‌ها:</h4>
-                <label>
-                    <input type="checkbox" name="access_user_panel" value="1" checked>
-                    دسترسی به پنل کاربری (dev-panel)
-                </label>
-                <label>
-                    <input type="checkbox" name="access_admin_panel" value="1">
-                    دسترسی به پنل مدیریت SSO (مدیر)
-                </label>
-            </div>
+            <form method="POST" action="create_user.php"> <div class="form-row">
+                    <div class="form-group">
+                        <label for="username">نام کاربری:</label>
+                        <input type="text" id="username" name="username" class="form-control" value="<?= htmlspecialchars($username_val) ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">رمز عبور:</label>
+                        <input type="password" id="password" name="password" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fullname">نام کامل (اختیاری):</label>
+                        <input type="text" id="fullname" name="fullname" class="form-control" value="<?= htmlspecialchars($fullname_val) ?>">
+                    </div>
+                </div>
+                 <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">ایمیل (اختیاری):</label>
+                        <input type="email" id="email" name="email" class="form-control" value="<?= htmlspecialchars($email_val) ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">تلفن (اختیاری):</label>
+                        <input type="tel" id="phone" name="phone" class="form-control" value="<?= htmlspecialchars($phone_val) ?>">
+                    </div>
+                </div>
 
-             <div class="checkbox-group">
-            <h4>نوع کاربر:</h4>
-            <label>
-                <input type="checkbox" name="is_staff" value="1" id="is_staff_checkbox">
-                این کاربر استف است
-            </label>
-            <small class="form-hint">
-                        توصیه می شود از استف مورد نظر درخواست کنید که از پنل، درخواست خود را ارسال کند تا تمامی مراحل ثبت اطلاعات به طور اتوماتیک انجام شود و در سیستم اختلالی ایجاد نشود.
-        </smaill>
-             </div>
-        <div class="checkbox-group" id="user_permissions_group"> <h4>دسترسی‌های کاربر عادی:</h4>
-            <label>
-                <input type="checkbox" name="access_user_panel" value="1" checked>
-                دسترسی به پنل کاربری (dev-panel)
-            </label>
-            <label>
-                <input type="checkbox" name="access_admin_panel" value="1">
-                دسترسی به پنل مدیریت SSO (مدیر)
-            </label>
+                <div class="checkbox-group">
+                    <h4>نوع کاربر:</h4>
+                    <label>
+                        <input type="checkbox" name="is_staff" value="1" id="is_staff_checkbox">
+                        این کاربر **استف** است (اطلاعات در جدول `staff-manage` ذخیره می‌شود)
+                    </label>
+                    <small class="form-hint">
+                        توصیه می‌شود استف‌ها از طریق فرم درخواست ثبت‌نام کنند تا تمام اطلاعاتشان به طور کامل ثبت شود.
+                    </small>
+                </div>
+                
+                <div class="checkbox-group" id="user_permissions_group">
+                    <h4>دسترسی‌های کاربر عادی:</h4>
+                    <label>
+                        <input type="checkbox" name="access_user_panel" value="1" checked>
+                        دسترسی به پنل کاربری (dev-panel)
+                    </label>
+                    <label>
+                        <input type="checkbox" name="access_admin_panel" value="1">
+                        دسترسی به پنل مدیریت SSO (مدیر)
+                    </label>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-save"></i> ایجاد کاربر
+                </button>
+            </form>
         </div>
-            
-
-            <button type="submit" class="submit-btn">
-                <i class="fas fa-save"></i> ایجاد کاربر
-            </button>
-             <a href="admin_panel.php" class="btn-panel" style="background: #555; margin-right: 10px; padding: 12px 20px; border-radius: 8px; text-decoration: none; color: white;">
-                <i class="fas fa-arrow-left"></i> بازگشت
-            </a>
-        </form>
-    </div>
+    </main>
 </div>
 
-    <script>
-        // JS برای مخفی کردن دسترسی‌ها اگر کاربر استف است
-        document.getElementById('is_staff_checkbox').addEventListener('change', function() {
-            document.getElementById('user_permissions_group').style.display = this.checked ? 'none' : 'block';
-        });
-        // اجرای اولیه برای بارگذاری صفحه
-         document.getElementById('user_permissions_group').style.display = document.getElementById('is_staff_checkbox').checked ? 'none' : 'block';
-    </script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const isStaffCheckbox = document.getElementById('is_staff_checkbox');
+        const userPermissionsGroup = document.getElementById('user_permissions_group');
+
+        function togglePermissionsView() {
+            // اگر چک‌باکس "استف" تیک خورده باشد، بخش دسترسی‌های کاربر عادی مخفی می‌شود
+            if (userPermissionsGroup) {
+                userPermissionsGroup.style.display = isStaffCheckbox.checked ? 'none' : 'block';
+            }
+        }
+
+        if (isStaffCheckbox) {
+            isStaffCheckbox.addEventListener('change', togglePermissionsView);
+            // اجرای اولیه برای تنظیم نمایش در هنگام بارگذاری صفحه
+            togglePermissionsView();
+        }
+    });
+</script>
 </body>
 </html>
