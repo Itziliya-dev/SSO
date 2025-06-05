@@ -35,7 +35,7 @@ if ($user_type === 'user') {
     $is_owner = $_SESSION['is_owner'] ?? false;
     $has_user_panel = $_SESSION['has_user_panel'] ?? true; // این خط را بر اساس منطق خودتان ممکن است نیاز به تغییر داشته باشد
     // $is_staff = $_SESSION['is_staff'] ?? 0; // اگر کاربر عادی می‌تواند همزمان استف هم باشد
-                                            // در این حالت، منطق خواندن اطلاعات استف باید اینجا هم بررسی شود
+    // در این حالت، منطق خواندن اطلاعات استف باید اینجا هم بررسی شود
 } elseif ($user_type === 'staff') {
     $is_staff = true;
     $staff_permissions = $_SESSION['permissions'] ?? 'فاقد مقام';
@@ -532,8 +532,8 @@ if (!defined('PANEL_URL')) {
                 <h2><i class="fas fa-concierge-bell"></i> خدمات در دسترس شما</h2>
                 <div class="service-buttons">
                     <?php
-                        $has_services_to_show = false; 
-                    ?>
+                        $has_services_to_show = false;
+?>
 
                     <?php if ($has_user_panel):  ?>
                         <a href="<?= htmlspecialchars(PANEL_URL) ?>" class="service-btn user-panel-btn" target="_blank">
@@ -552,14 +552,14 @@ if (!defined('PANEL_URL')) {
                     <?php endif; ?>
 
                     <?php
-                        if ($is_staff && $staff_is_verify) {
-                            // اگر staff_permissions در سشن ست شده باشد
-                            if (isset($_SESSION['permissions']) && strpos(strtolower($_SESSION['permissions']), 'dev') !== false) {
-                                echo '<a href="/server_management/server_control.php" class="service-btn staff-specific-btn"><i class="fas fa-server"></i><span>کنترل سرور (مخصوص DEV)</span></a>';
-                                $has_services_to_show = true;
-                            }
-                        }
-                    ?>
+    if ($is_staff && $staff_is_verify) {
+        // اگر staff_permissions در سشن ست شده باشد
+        if (isset($_SESSION['permissions']) && strpos(strtolower($_SESSION['permissions']), 'dev') !== false) {
+            echo '<a href="/server_management/server_control.php" class="service-btn staff-specific-btn"><i class="fas fa-server"></i><span>کنترل سرور (مخصوص DEV)</span></a>';
+            $has_services_to_show = true;
+        }
+    }
+?>
 
                     <?php if (!$has_services_to_show): ?>
                          <div class="no-service">

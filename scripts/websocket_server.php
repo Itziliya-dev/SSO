@@ -1,4 +1,5 @@
 <?php
+
 // websocket_server.php
 
 // این مسیر صحیح است اگر websocket_server.php در /var/www/sso-system/ باشد
@@ -32,4 +33,3 @@ $server = IoServer::factory($http, 8080, '0.0.0.0', $loop);
 echo "WebSocket server started on port 8080\n";
 
 $server->run();
-?>

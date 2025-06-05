@@ -1,4 +1,5 @@
 <?php
+
 // این خطوط برای نمایش خطا در محیط تست مفید هستند
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -43,7 +44,7 @@ $conn = null;
 try {
     $conn = getDbConnection();
     if (!$conn) {
-         throw new Exception("عدم موفقیت در اتصال به دیتابیس.");
+        throw new Exception("عدم موفقیت در اتصال به دیتابیس.");
     }
     // اگر از mysqli استفاده می‌کنید و getDbConnection ممکن است خطا برگرداند:
     if ($conn instanceof mysqli && $conn->connect_error) {
@@ -64,7 +65,7 @@ try {
         } else {
             // بررسی اینکه آیا استف وجود داشته یا قبلا تایید شده
             $check_stmt = $conn->prepare("SELECT is_verify FROM `staff-manage` WHERE id = ?");
-            if($check_stmt) {
+            if ($check_stmt) {
                 $check_stmt->bind_param("i", $staff_id);
                 $check_stmt->execute();
                 $result = $check_stmt->get_result();
@@ -76,11 +77,11 @@ try {
                         echo json_encode(['success' => false, 'message' => 'تغییری در وضعیت استف ایجاد نشد.']);
                     }
                 } else {
-                     echo json_encode(['success' => false, 'message' => 'استف با این شناسه یافت نشد.']);
+                    echo json_encode(['success' => false, 'message' => 'استف با این شناسه یافت نشد.']);
                 }
                 $check_stmt->close();
             } else {
-                 echo json_encode(['success' => false, 'message' => 'خطا در بررسی وضعیت فعلی.']);
+                echo json_encode(['success' => false, 'message' => 'خطا در بررسی وضعیت فعلی.']);
             }
         }
     } else {
@@ -99,4 +100,3 @@ try {
         $conn->close();
     }
 }
-?>

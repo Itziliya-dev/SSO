@@ -1,4 +1,5 @@
 <?php
+
 require_once '/var/www/sso-system/includes/config.php';
 require_once '/var/www/sso-system/includes/database.php';
 require_once '/var/www/sso-system/includes/auth_functions.php';
@@ -29,17 +30,17 @@ if (empty($staff_id) || !is_numeric($staff_id)) {
 
 try {
     $conn = getDbConnection();
-    
+
     $stmt = $conn->prepare("UPDATE `staff-manage` SET 
         is_active = 1,
         updated_at = NOW()
         WHERE id = ?");
-    
+
     $stmt->bind_param("i", $staff_id);
     $stmt->execute();
-    
+
     echo json_encode(['success' => true, 'message' => 'استاف با موفقیت فعال شد']);
-    
+
 } catch (Exception $e) {
     echo json_encode([
         'success' => false,

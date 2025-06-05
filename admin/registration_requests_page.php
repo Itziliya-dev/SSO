@@ -19,7 +19,7 @@ $sql = "SELECT * FROM `registration_requests`";
 $params = [];
 $types = '';
 
-if (in_array($filter_status, $allowed_statuses)) {
+if (in_array($filter_status, $allowed_statuses, true)) {
     $sql .= " WHERE status = ?";
     $params[] = $filter_status;
     $types .= 's';
@@ -106,7 +106,7 @@ $pending_requests_count = $conn->query("SELECT COUNT(id) as count FROM `registra
 </div>
 
 <div class="admin-layout">
-    <?php include __DIR__.'/../includes/_sidebar.php'; // ۳. فراخوانی سایدبار از فایل مجزا ?>
+    <?php include __DIR__.'/../includes/_sidebar.php'; // ۳. فراخوانی سایدبار از فایل مجزا?>
 
 
     <main class="main-content">
@@ -138,7 +138,7 @@ $pending_requests_count = $conn->query("SELECT COUNT(id) as count FROM `registra
                     </thead>
                     <tbody>
                         <?php if ($requests_result->num_rows > 0): ?>
-                            <?php while($request = $requests_result->fetch_assoc()): ?>
+                            <?php while ($request = $requests_result->fetch_assoc()): ?>
                             <tr>
                                 <td><?= htmlspecialchars($request['tracking_code']) ?></td>
                                 <td><?= htmlspecialchars($request['username']) ?></td>
@@ -148,13 +148,17 @@ $pending_requests_count = $conn->query("SELECT COUNT(id) as count FROM `registra
                                     <span class="status-badge <?= htmlspecialchars($request['status']) ?>">
                                         <?php
                                             switch ($request['status']) {
-                                                case 'pending': echo 'در حال بررسی'; break;
-                                                case 'approved': echo 'تایید شده'; break;
-                                                case 'rejected': echo 'رد شده'; break;
-                                                case 'staff': echo 'استف'; break;
+                                                case 'pending': echo 'در حال بررسی';
+                                                    break;
+                                                case 'approved': echo 'تایید شده';
+                                                    break;
+                                                case 'rejected': echo 'رد شده';
+                                                    break;
+                                                case 'staff': echo 'استف';
+                                                    break;
                                                 default: echo htmlspecialchars($request['status']);
                                             }
-                                        ?>
+                                ?>
                                     </span>
                                 </td>
                                 <td>

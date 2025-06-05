@@ -1,4 +1,5 @@
 <?php
+
 require_once '/var/www/sso-system/includes/config.php';
 require_once '/var/www/sso-system/includes/database.php';
 require_once '/var/www/sso-system/includes/auth_functions.php';
@@ -42,17 +43,17 @@ if (empty($fullname) || empty($username)) {
 
 try {
     $conn = getDbConnection();
-    
+
     // بررسی تکراری نبودن نام کاربری
     $stmt = $conn->prepare("SELECT id FROM `staff-manage` WHERE username = ? AND id != ?");
     $stmt->bind_param("si", $username, $staff_id);
     $stmt->execute();
-    
+
     if ($stmt->get_result()->num_rows > 0) {
         echo json_encode(['success' => false, 'message' => 'نام کاربری قبلا استفاده شده است']);
         exit();
     }
-    
+
     // آپدیت اطلاعات استف
     $stmt = $conn->prepare("UPDATE `staff-manage` SET 
         fullname = ?,
@@ -64,8 +65,9 @@ try {
         is_active = ?,
         updated_at = NOW()
         WHERE id = ?");
-    
-    $stmt->bind_param("ssssssii", 
+
+    $stmt->bind_param(
+        "ssssssii",
         $fullname,
         $username,
         $email,
@@ -75,15 +77,15 @@ try {
         $is_active,
         $staff_id
     );
-    
+
     $stmt->execute();
-    
+
     if ($stmt->affected_rows > 0) {
         echo json_encode(['success' => true, 'message' => 'اطلاعات استف با موفقیت به‌روزرسانی شد']);
     } else {
         echo json_encode(['success' => false, 'message' => 'هیچ تغییری اعمال نشد']);
     }
-    
+
 } catch (Exception $e) {
     echo json_encode([
         'success' => false,

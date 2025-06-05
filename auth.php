@@ -1,4 +1,5 @@
 <?php
+
 // فایل: auth.php (نسخه نهایی و اصلاح‌شده برای رفع ارور)
 
 require_once __DIR__.'/includes/config.php';
@@ -52,7 +53,7 @@ try {
 
         $_SESSION['new_failed_attempt'] = true;
         $_SESSION['last_failed_attempt_time'] = time();
-        
+
         throw new Exception($authResult['message']);
     }
 
@@ -64,13 +65,13 @@ try {
     $_SESSION = [];
 
     $user_info = $authResult['data'];
-    
+
     // ذخیره اطلاعات در سشن (کد بدون تغییر)
     $_SESSION['user_id'] = $user_info['id'];
     $_SESSION['username'] = $user_info['username'];
     $_SESSION['user_type'] = $user_info['type'];
     $_SESSION['is_staff'] = $user_info['is_staff'] ?? 0;
-    
+
     if ($user_info['type'] === 'user') {
         $_SESSION['is_owner'] = $user_info['is_owner'] ?? 0;
         $_SESSION['has_user_panel'] = $user_info['has_user_panel'] ?? 1;
@@ -81,7 +82,7 @@ try {
         $_SESSION['staff_record_id'] = $user_info['staff_record_id'];
         $_SESSION['is_verify'] = $user_info['is_verify'] ?? 0;
         $_SESSION['permissions'] = $user_info['permissions'] ?? '';
-        
+
         // خواندن آخرین ورود برای استف از دیتابیس
         $last_login_stmt = $conn->prepare("SELECT last_login FROM `staff-manage` WHERE id = ?");
         $last_login_stmt->bind_param("i", $_SESSION['staff_record_id']);
@@ -89,7 +90,7 @@ try {
         $last_login_res = $last_login_stmt->get_result()->fetch_assoc();
         $_SESSION['last_login_staff'] = $last_login_res['last_login'] ?? 'نامشخص';
         $last_login_stmt->close();
-        
+
         $staff_permissions = strtolower(trim($user_info['permissions'] ?? ''));
         $_SESSION['can_access_server_control'] = ($staff_permissions === 'dev');
     }
@@ -122,10 +123,10 @@ try {
 } catch (Exception $e) {
     // لاگ کردن خطا در سمت سرور
     error_log('SSO Auth Error: ' . $e->getMessage() . ' | IP: ' . ($_SERVER['REMOTE_ADDR'] ?? 'N/A') . ' | User: ' . ($_POST['username'] ?? 'N/A'));
-    
+
     // *** تغییر کلیدی: ذخیره خطا در سشن به جای URL ***
     $_SESSION['login_error'] = $e->getMessage();
-    
+
     // هدایت به صفحه ورود بدون پارامتر در URL
     header('Location: login.php');
     exit();
@@ -135,4 +136,3 @@ try {
         $conn->close();
     }
 }
-?>

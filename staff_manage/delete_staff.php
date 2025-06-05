@@ -1,4 +1,5 @@
 <?php
+
 // ۱. تنظیم هدر برای پاسخ JSON
 header('Content-Type: application/json');
 
@@ -59,7 +60,8 @@ try {
                 delete_reason, deleted_by
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
-        $archive_stmt->bind_param("issssissssss",
+        $archive_stmt->bind_param(
+            "issssissssss",
             $staff_to_delete['id'],
             $staff_to_delete['fullname'],
             $staff_to_delete['username'],
@@ -83,7 +85,7 @@ try {
 
         // نهایی کردن تراکنش دیتابیس
         $conn->commit();
-        
+
         // ===================================================================
         // شروع بخش جدید: ارسال درخواست به بات دیسکورد
         // این کد فقط زمانی اجرا می‌شود که عملیات دیتابیس موفقیت‌آمیز باشد
@@ -140,4 +142,3 @@ try {
 // ۸. ارسال پاسخ نهایی
 echo json_encode($response);
 exit();
-?>

@@ -59,9 +59,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
                 echo json_encode(['success' => true, 'message' => 'هویت استف با موفقیت تایید شد']);
             }
             break;
-            
+
         case 'reset_password_staff':
-             if ($staffId > 0 && isset($_POST['new_password'])) {
+            if ($staffId > 0 && isset($_POST['new_password'])) {
                 $newPassword = $_POST['new_password'];
                 if (empty($newPassword) || strlen($newPassword) < 6) {
                     echo json_encode(['success' => false, 'message' => 'رمز عبور باید حداقل ۶ کاراکتر باشد']);
@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
 
                 $stmt = $conn->prepare("UPDATE `staff-manage` SET fullname = ?, username = ?, email = ?, phone = ?, permissions = ? WHERE id = ?");
                 $stmt->bind_param("sssssi", $fullname, $username, $email, $phone, $permissions, $staffId);
-                
+
                 if ($stmt->execute()) {
                     echo json_encode(['success' => true, 'message' => 'اطلاعات استف با موفقیت ویرایش شد']);
                 } else {
@@ -163,7 +163,7 @@ $pending_requests_count = $conn->query("SELECT COUNT(id) as count FROM `registra
 </div>
 
 <div class="admin-layout">
-    <?php include __DIR__.'/../includes/_sidebar.php'; // ۳. فراخوانی سایدبار از فایل مجزا ?>
+    <?php include __DIR__.'/../includes/_sidebar.php'; // ۳. فراخوانی سایدبار از فایل مجزا?>
 
 
     <main class="main-content">

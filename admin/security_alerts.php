@@ -79,7 +79,7 @@ $pending_requests_count = $conn->query("SELECT COUNT(id) as count FROM `registra
 <body>
 
 <div class="admin-layout">
-    <?php include __DIR__.'/../includes/_sidebar.php'; // ۳. فراخوانی سایدبار از فایل مجزا ?>
+    <?php include __DIR__.'/../includes/_sidebar.php'; // ۳. فراخوانی سایدبار از فایل مجزا?>
 
 
     <main class="main-content">
@@ -115,7 +115,7 @@ $pending_requests_count = $conn->query("SELECT COUNT(id) as count FROM `registra
                     </thead>
                     <tbody>
                         <?php if ($alerts_result && $alerts_result->num_rows > 0): ?>
-                            <?php while($alert = $alerts_result->fetch_assoc()): ?>
+                            <?php while ($alert = $alerts_result->fetch_assoc()): ?>
                             <tr>
                                 <td><?= $alert['id'] ?></td>
                                 <td><?= htmlspecialchars($alert['username']) ?></td>

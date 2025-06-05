@@ -103,12 +103,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $types_update = "";
         $table_to_update = ($user_type === 'staff') ? '`staff-manage`' : '`users`';
 
-        if ($posted_fullname !== $profile_data['fullname']) { $update_sql_parts[] = "fullname = ?"; $params_update[] = $posted_fullname; $types_update .= "s"; }
-        if ($posted_email !== $profile_data['email']) { $update_sql_parts[] = "email = ?"; $params_update[] = $posted_email; $types_update .= "s"; }
-        if ($posted_phone !== $profile_data['phone']) { $update_sql_parts[] = "phone = ?"; $params_update[] = $posted_phone; $types_update .= "s"; }
+        if ($posted_fullname !== $profile_data['fullname']) {
+            $update_sql_parts[] = "fullname = ?";
+            $params_update[] = $posted_fullname;
+            $types_update .= "s";
+        }
+        if ($posted_email !== $profile_data['email']) {
+            $update_sql_parts[] = "email = ?";
+            $params_update[] = $posted_email;
+            $types_update .= "s";
+        }
+        if ($posted_phone !== $profile_data['phone']) {
+            $update_sql_parts[] = "phone = ?";
+            $params_update[] = $posted_phone;
+            $types_update .= "s";
+        }
 
         if ($user_type === 'staff') {
-            if ($posted_staff_age !== null && (int)$posted_staff_age !== (int)$profile_data['age']) { $update_sql_parts[] = "age = ?"; $params_update[] = (int)$posted_staff_age; $types_update .= "i"; }
+            if ($posted_staff_age !== null && (int)$posted_staff_age !== (int)$profile_data['age']) {
+                $update_sql_parts[] = "age = ?";
+                $params_update[] = (int)$posted_staff_age;
+                $types_update .= "i";
+            }
             // معمولاً استف خودش discord_id, discord_id2, permissions را از اینجا تغییر نمی‌دهد
             // این مقادیر توسط بات یا ادمین تنظیم می‌شوند.
         }
@@ -127,11 +143,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($update_sql_parts)) {
             $update_sql = "UPDATE $table_to_update SET " . implode(", ", $update_sql_parts);
             // اضافه کردن updated_at اگر در جدول وجود دارد و به طور خودکار آپدیت نمی‌شود
-             if ($user_type === 'staff' && array_key_exists('updated_at', $profile_data)) {
-                 $update_sql .= (empty($update_sql_parts) ? "" : ", ") . "updated_at = NOW()";
-             } elseif ($user_type === 'user' && method_exists($conn, 'prepare') /* check if users has updated_at too */) {
-                 // $update_sql .= (empty($update_sql_parts) ? "" : ", ") . "updated_at = NOW()";
-             }
+            if ($user_type === 'staff' && array_key_exists('updated_at', $profile_data)) {
+                $update_sql .= (empty($update_sql_parts) ? "" : ", ") . "updated_at = NOW()";
+            } elseif ($user_type === 'user' && method_exists($conn, 'prepare') /* check if users has updated_at too */) {
+                // $update_sql .= (empty($update_sql_parts) ? "" : ", ") . "updated_at = NOW()";
+            }
 
 
             $update_sql .= " WHERE id = ?";
@@ -140,20 +156,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $types_update .= "i";
 
             $stmt_update = $conn->prepare($update_sql);
-            if($stmt_update === false) throw new Exception("خطای Prepare (Update $table_to_update): " . $conn->error);
-            
-            // اطمینان از ارسال پارامترها فقط اگر آرایه params_update خالی نیست
-            if (!empty($params_update)) {
-                 $stmt_update->bind_param($types_update, ...$params_update);
+            if ($stmt_update === false) {
+                throw new Exception("خطای Prepare (Update $table_to_update): " . $conn->error);
             }
 
-            if(!$stmt_update->execute()) throw new Exception("خطای Execute (Update $table_to_update): " . $stmt_update->error);
+            // اطمینان از ارسال پارامترها فقط اگر آرایه params_update خالی نیست
+            if (!empty($params_update)) {
+                $stmt_update->bind_param($types_update, ...$params_update);
+            }
+
+            if (!$stmt_update->execute()) {
+                throw new Exception("خطای Execute (Update $table_to_update): " . $stmt_update->error);
+            }
             $stmt_update->close();
-             $message = "اطلاعات با موفقیت بروزرسانی شد.";
-             $message_type = 'success';
+            $message = "اطلاعات با موفقیت بروزرسانی شد.";
+            $message_type = 'success';
         } else {
-             $message = "هیچ تغییری برای بروزرسانی وجود نداشت.";
-             $message_type = 'info'; // یا هر نوع پیام دیگری
+            $message = "هیچ تغییری برای بروزرسانی وجود نداشت.";
+            $message_type = 'info'; // یا هر نوع پیام دیگری
         }
 
 
@@ -387,12 +407,12 @@ if ($conn) {
                 <strong><i class="fas fa-link"></i> وضعیت کلی اتصال:</strong>
                 <?php
                     $discord_conn_status_text = 'متصل نشده یا در انتظار تایید با <code>/connect</code>';
-                    $discord_conn_status_class = 'status-not-verified';
-                    if (isset($profile_data['discord_conn']) && (int)$profile_data['discord_conn'] === 1) {
-                        $discord_conn_status_text = 'متصل و تایید شده';
-                        $discord_conn_status_class = 'status-verified';
-                    }
-                ?>
+        $discord_conn_status_class = 'status-not-verified';
+        if (isset($profile_data['discord_conn']) && (int)$profile_data['discord_conn'] === 1) {
+            $discord_conn_status_text = 'متصل و تایید شده';
+            $discord_conn_status_class = 'status-verified';
+        }
+        ?>
                 <span class="status-value <?= $discord_conn_status_class ?>">
                     <?= $discord_conn_status_text ?>
                 </span>
@@ -432,7 +452,7 @@ if ($conn) {
                 <input type="tel" id="phone" name="phone" class="form-control" value="<?= htmlspecialchars($profile_data['phone'] ?? '') ?>">
             </div>
 
-            <?php if ($user_type === 'staff'): // فیلدهای مخصوص استف ?>
+            <?php if ($user_type === 'staff'): // فیلدهای مخصوص استف?>
             <div class="form-section staff-section">
                 <h4><i class="fas fa-user-tie"></i> اطلاعات تکمیلی استف</h4>
                 <div class="form-group">

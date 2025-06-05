@@ -96,7 +96,7 @@ $staff_count = $conn->query("SELECT COUNT(id) as count FROM `staff-manage` WHERE
 
 <div class="admin-layout">
 
-    <?php include __DIR__.'/../includes/_sidebar.php'; // ۳. فراخوانی سایدبار از فایل مجزا ?>
+    <?php include __DIR__.'/../includes/_sidebar.php'; // ۳. فراخوانی سایدبار از فایل مجزا?>
 
     <main class="main-content">
         <header class="main-header">
@@ -143,7 +143,7 @@ $staff_count = $conn->query("SELECT COUNT(id) as count FROM `staff-manage` WHERE
                     </thead>
                     <tbody>
                         <?php if ($pending_requests_query->num_rows > 0): ?>
-                            <?php while($request = $pending_requests_query->fetch_assoc()): ?>
+                            <?php while ($request = $pending_requests_query->fetch_assoc()): ?>
                             <tr>
                                 <td><?= htmlspecialchars($request['tracking_code']) ?></td>
                                 <td><?= htmlspecialchars($request['username']) ?></td>

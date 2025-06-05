@@ -1,4 +1,5 @@
 <?php
+
 require_once '/var/www/sso-system/includes/config.php';
 require_once '/var/www/sso-system/includes/database.php';
 require_once '/var/www/sso-system/includes/auth_functions.php';
@@ -35,20 +36,20 @@ if (strlen($new_password) < 6) {
 
 try {
     $conn = getDbConnection();
-    
+
     // هش کردن رمز عبور
     $hashed_password = password_hash($new_password, PASSWORD_BCRYPT);
-    
+
     $stmt = $conn->prepare("UPDATE `staff-manage` SET 
         password = ?,
         updated_at = NOW()
         WHERE id = ?");
-    
+
     $stmt->bind_param("si", $hashed_password, $staff_id);
     $stmt->execute();
-    
+
     echo json_encode(['success' => true, 'message' => 'رمز عبور با موفقیت تغییر یافت']);
-    
+
 } catch (Exception $e) {
     echo json_encode([
         'success' => false,

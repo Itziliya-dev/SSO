@@ -1,4 +1,5 @@
 <?php
+
 // server_control_actions.php
 
 // مسیر config.php را با ساختار پروژه خود تطبیق دهید
@@ -35,7 +36,8 @@ if (!$staff_is_verify) {
 // برای جلوگیری از تکرار، فرض می‌کنیم این تابع در یک فایل جداگانه مثلاً pterodactyl_api_functions.php
 // قرار دارد و اینجا include می‌شود. یا می‌توانید کل کد تابع را اینجا کپی کنید.
 // ********** شروع تابع callPterodactylAPI **********
-function callPterodactylAPI($endpoint, $method = 'GET', $data = null, $apiKeyType = 'client') {
+function callPterodactylAPI($endpoint, $method = 'GET', $data = null, $apiKeyType = 'client')
+{
     $url = PTERODACTYL_URL . $endpoint; // از config.php خوانده می‌شود
     $apiKey = ($apiKeyType === 'application') ? PTERODACTYL_API_KEY_APPLICATION : PTERODACTYL_API_KEY_CLIENT; // از config.php
 
@@ -58,7 +60,7 @@ function callPterodactylAPI($endpoint, $method = 'GET', $data = null, $apiKeyTyp
             $headers[] = "Content-Type: application/json";
             $headers[] = "Content-Length: " . strlen($jsonData);
         } else {
-             $headers[] = "Content-Length: 0";
+            $headers[] = "Content-Length: 0";
         }
     }
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
@@ -90,16 +92,16 @@ function callPterodactylAPI($endpoint, $method = 'GET', $data = null, $apiKeyTyp
         error_log("Pterodactyl API Error in actions - HTTP Code: $httpCode, Response: $response_body");
         return ['success' => false, 'message' => $errorMessage, 'http_code' => $httpCode, 'details' => $response_body];
     }
-    
-    if (json_last_error() !== JSON_ERROR_NONE && !($httpCode == 204 && empty($response_body)) ) {
+
+    if (json_last_error() !== JSON_ERROR_NONE && !($httpCode == 204 && empty($response_body))) {
         error_log("Pterodactyl API JSON Decode Error in actions. HTTP Code: $httpCode, Response: $response_body");
         return ['success' => false, 'message' => 'پاسخ دریافتی از Pterodactyl معتبر نیست (JSON).', 'details' => $response_body];
     }
-    
+
     // اگر تا اینجا رسیده و خطا نبوده، success را true می‌کنیم
     if (is_array($decodedResponse)) { // اطمینان از اینکه پاسخ یک آرایه است
         $decodedResponse['success'] = true;
-    } else if ($httpCode < 300) { // اگر کد موفقیت آمیز بود ولی بدنه خالی یا غیر JSON بود
+    } elseif ($httpCode < 300) { // اگر کد موفقیت آمیز بود ولی بدنه خالی یا غیر JSON بود
         return ['success' => true, 'http_code' => $httpCode, 'message' => 'عملیات موفق (بدون محتوای خاص).'];
     } else { // حالت ناشناخته
         return ['success' => false, 'http_code' => $httpCode, 'message' => 'پاسخ ناشناخته از سرور Pterodactyl.', 'details' => $response_body];
@@ -117,7 +119,7 @@ switch ($action) {
     case 'get_status':
         $serverResources = callPterodactylAPI("/api/client/servers/" . PTERODACTYL_SERVER_ID . "/resources");
         $fullServerInfo = callPterodactylAPI("/api/client/servers/" . PTERODACTYL_SERVER_ID);
-        
+
         $networkInfo = ['ip' => 'نامشخص', 'port' => 'نامشخص'];
         $serverStatusText = 'نامشخص';
         $currentStateRaw = 'unknown';
@@ -134,9 +136,9 @@ switch ($action) {
                 'offline' => 'آفلاین',
                 default => htmlspecialchars($currentStateRaw),
             };
-            $ramUsage = round(($attributes['resources']['memory_bytes'] ?? 0) / (1024*1024) , 2);
+            $ramUsage = round(($attributes['resources']['memory_bytes'] ?? 0) / (1024 * 1024), 2);
             $cpuUsage = round($attributes['resources']['cpu_absolute'] ?? 0, 2);
-        } elseif(isset($serverResources['message'])) {
+        } elseif (isset($serverResources['message'])) {
             $serverStatusText = "خطا در منابع: " . htmlspecialchars($serverResources['message']);
         }
 
@@ -145,8 +147,8 @@ switch ($action) {
             $mainAllocation = $fullServerInfo['attributes']['relationships']['allocations']['data'][0]['attributes'];
             $networkInfo['ip'] = htmlspecialchars($mainAllocation['ip_alias'] ?? $mainAllocation['ip']);
             $networkInfo['port'] = htmlspecialchars($mainAllocation['port']);
-        } elseif(isset($fullServerInfo['message'])) {
-             error_log("Pterodactyl Full Info Fetch Error: " . $fullServerInfo['message']);
+        } elseif (isset($fullServerInfo['message'])) {
+            error_log("Pterodactyl Full Info Fetch Error: " . $fullServerInfo['message']);
         }
 
 
@@ -179,4 +181,3 @@ switch ($action) {
 }
 
 echo json_encode($response_output);
-?>

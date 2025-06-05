@@ -91,7 +91,7 @@ $conn->close();
 </div>
 
 <div class="admin-layout">
-    <?php include __DIR__.'/../includes/_sidebar.php'; // ۳. فراخوانی سایدبار از فایل مجزا ?>
+    <?php include __DIR__.'/../includes/_sidebar.php'; // ۳. فراخوانی سایدبار از فایل مجزا?>
 
 
     <main class="main-content">

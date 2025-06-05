@@ -1,10 +1,12 @@
 <?php
+
 require_once __DIR__.'/database.php'; // اطمینان حاصل کنید این فایل موجود و صحیح است
 
 
 
 
-function updateLastLogin($conn, $id, $id_column_name, $table_name) {
+function updateLastLogin($conn, $id, $id_column_name, $table_name)
+{
     if ($conn) {
         $stmt = $conn->prepare("UPDATE `$table_name` SET last_login = NOW() WHERE `$id_column_name` = ?");
         if ($stmt) {
@@ -18,7 +20,8 @@ function updateLastLogin($conn, $id, $id_column_name, $table_name) {
 }
 
 
-function authenticateUser($username, $password) {
+function authenticateUser($username, $password)
+{
     try {
         $conn = getDbConnection(); // اطمینان حاصل کنید این تابع اتصال را برمی‌گرداند
 
@@ -57,7 +60,8 @@ function authenticateUser($username, $password) {
 }
 
 
-function authenticateUserOrStaff($conn, $username, $password) {
+function authenticateUserOrStaff($conn, $username, $password)
+{
     // 1. بررسی جدول users
     try {
         $stmt = $conn->prepare("SELECT id, username, password, is_owner, status, has_user_panel, is_staff FROM users WHERE username = ?");
@@ -130,7 +134,8 @@ function authenticateUserOrStaff($conn, $username, $password) {
 }
 
 // اصلاح پارامتر ورودی تابع
-function generateSsoToken($tokenData) {
+function generateSsoToken($tokenData)
+{
     $tokenDir = defined('TOKEN_DIR') ? TOKEN_DIR : '/tmp/sso_tokens';
 
     // ایجاد پوشه اگر وجود نداشت
@@ -144,9 +149,8 @@ function generateSsoToken($tokenData) {
 
     $tokenPath = "$tokenDir/$token";
     if (file_put_contents($tokenPath, json_encode($tokenData)) === false) {
-         throw new Exception('Failed to write token file');
+        throw new Exception('Failed to write token file');
     }
 
     return $token;
 }
-?>

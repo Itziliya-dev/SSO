@@ -25,8 +25,8 @@ if (!$can_access_server_control) {
     exit();
 }
 if (!$staff_is_verify) {
-     header('Location: ../dashboard.php?error=staff_not_verified');
-     exit();
+    header('Location: ../dashboard.php?error=staff_not_verified');
+    exit();
 }
 
 // Server ID از config.php خوانده می‌شود

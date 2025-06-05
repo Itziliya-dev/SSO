@@ -1,35 +1,24 @@
 <?php
-// فایل: includes/config.php
 
-// بارگذاری خودکار کتابخانه‌های Composer
 require_once __DIR__ . '/../vendor/autoload.php';
 
-// بارگذاری متغیرهای محیطی از فایل .env
 $dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__));
 $dotenv->load();
 
-// ===== تنظیمات اصلی =====
 define('BASE_URL', 'https://sso.itziliya-dev.ir');
 define('PANEL_URL', $_ENV['PTERODACTYL_URL']);
 define('ADMIN_PANEL_URL', 'https://sso.itziliya-dev.ir/admin');
 define('TOKEN_DIR', '/tmp/sso_tokens');
 
-// ===== تنظیمات Pterodactyl =====
 define('PTERODACTYL_URL', $_ENV['PTERODACTYL_URL']);
 define('PTERODACTYL_API_KEY_CLIENT', $_ENV['PTERODACTYL_API_KEY_CLIENT']);
 define('PTERODACTYL_API_KEY_APPLICATION', $_ENV['PTERODACTYL_API_KEY_APPLICATION']);
 define('PTERODACTYL_SERVER_ID', $_ENV['PTERODACTYL_SERVER_ID']);
 
-// ===== تنظیمات امنیتی جلسات (Session) =====
-// این تنظیمات باید قبل از session_start() اعمال شوند.
+
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.cookie_httponly', 1);
-    ini_set('session.cookie_secure', 1); // برای HTTPS الزامی است
+    ini_set('session.cookie_secure', 1);
     ini_set('session.use_strict_mode', 1);
-    ini_set('session.cookie_samesite', 'Lax'); // یا 'Strict' برای امنیت بیشتر
+    ini_set('session.cookie_samesite', 'Lax');
 }
-
-// ===== مدیریت خطا =====
-// خطاها دیگر در کد مدیریت نمی‌شوند و باید در php.ini تنظیم شوند.
-// display_errors باید در سرور پروداکشن خاموش (Off) باشد.
-// log_errors باید روشن (On) باشد.

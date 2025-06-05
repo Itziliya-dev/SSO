@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message_type = 'error';
         } else {
             $hashed_password = password_hash($password, PASSWORD_BCRYPT);
-            
+
             // $conn->begin_transaction(); // اگر نیاز به تراکنش دارید (برای عملیات پیچیده‌تر)
 
             if ($is_staff_checkbox) {
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = "$message_text '$username' با موفقیت ایجاد شد.";
                 $message_type = 'success';
             } else {
-                 throw new Exception("خطا در ایجاد $message_text: " . $stmt->error);
+                throw new Exception("خطا در ایجاد $message_text: " . $stmt->error);
             }
             $stmt->close();
             // $conn->close(); // این خط از اینجا حذف می‌شود
@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // if ($conn) $conn->rollback(); // اگر از تراکنش استفاده می‌کنید و اتصال هنوز باز است
         $message = "خطا: " . $e->getMessage();
         if (isset($conn) && $conn->errno == 1062) { // بررسی می‌کنیم $conn تعریف شده باشد
-             $message = "خطا: نام کاربری '$username' قبلاً استفاده شده است.";
+            $message = "خطا: نام کاربری '$username' قبلاً استفاده شده است.";
         }
         $message_type = 'error';
     } finally {

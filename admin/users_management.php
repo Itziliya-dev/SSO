@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
                 echo json_encode(['success' => true, 'message' => 'کاربر با موفقیت حذف شد']);
             }
             break;
-            
+
         case 'reset_password':
             if ($userId > 0) {
                 $newPassword = $_POST['new_password'];
@@ -94,7 +94,7 @@ if (!empty($search)) {
     $params = array_merge($params, [$likeParam, $likeParam, $likeParam]);
     $types .= 'sss';
 }
-if ($status !== 'all' && in_array($status, ['active', 'suspended'])) {
+if ($status !== 'all' && in_array($status, ['active', 'suspended'], true)) {
     $whereConditions[] = "status = ?";
     $params[] = $status;
     $types .= 's';
@@ -140,7 +140,7 @@ $currentPage = 'users_management'; // ۱. تعریف صفحه فعلی برای 
 </div>
 
 <div class="admin-layout">
-    <?php include __DIR__.'/../includes/_sidebar.php'; // ۳. فراخوانی سایدبار از فایل مجزا ?>
+    <?php include __DIR__.'/../includes/_sidebar.php'; // ۳. فراخوانی سایدبار از فایل مجزا?>
 
 
     <main class="main-content">
@@ -197,11 +197,16 @@ $currentPage = 'users_management'; // ۱. تعریف صفحه فعلی برای 
                             </td>
                             <td class="permission-cell">
                                 <?php
-                                if ($user['is_owner'] && $user['has_user_panel']) echo '<span class="permission-badge full-access">کامل</span>';
-                                elseif ($user['is_owner']) echo '<span class="permission-badge owner-access">مدیریت</span>';
-                                elseif ($user['has_user_panel']) echo '<span class="permission-badge server-access">سرور</span>';
-                                else echo '<span class="permission-badge no-access">--</span>';
-                                ?>
+                                if ($user['is_owner'] && $user['has_user_panel']) {
+                                    echo '<span class="permission-badge full-access">کامل</span>';
+                                } elseif ($user['is_owner']) {
+                                    echo '<span class="permission-badge owner-access">مدیریت</span>';
+                                } elseif ($user['has_user_panel']) {
+                                    echo '<span class="permission-badge server-access">سرور</span>';
+                                } else {
+                                    echo '<span class="permission-badge no-access">--</span>';
+                                }
+                            ?>
                             </td>
                             <td class="actions">
                                 <button class="action-btn view-details" title="مشاهده" data-action="view" data-user-id="<?= $user['id'] ?>"><i class="fas fa-eye"></i></button>
