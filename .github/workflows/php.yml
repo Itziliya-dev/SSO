@@ -17,6 +17,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+          php-version: '8.3' # <-- این نسخه را به 8.3 تغییر دهید
+          extensions: mbstring, pdo_mysql # و سایر اکستنشن‌های مورد نیاز
+
     - name: Validate composer.json and composer.lock
       run: composer validate --strict
 
