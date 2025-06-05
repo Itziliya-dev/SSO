@@ -480,7 +480,7 @@ if (!defined('PANEL_URL')) {
             </button>
             <div class="user-menu-dropdown">
                 <a href="profile.php"><i class="fas fa-user-edit"></i> ویرایش پروفایل</a>
-                <a href="/../logout.php"><i class="fas fa-sign-out-alt"></i> خروج از حساب</a>
+                <a href="logout.php"><i class="fas fa-sign-out-alt"></i> خروج از حساب</a>
             </div>
         </div>
     </header>
@@ -544,7 +544,7 @@ if (!defined('PANEL_URL')) {
                     <?php endif; ?>
 
                     <?php if ($is_owner):  ?>
-                        <a href="/../admin_panel.php" class="service-btn admin-panel-btn">
+                        <a href="/../admin/admin_panel.php" class="service-btn admin-panel-btn">
                             <i class="fas fa-user-shield"></i>
                             <span>پنل مدیریت SSO</span>
                         </a>
