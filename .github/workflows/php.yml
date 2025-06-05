@@ -34,7 +34,7 @@ jobs:
       run: composer install --prefer-dist --no-progress
       
     - name: Check Coding Style (PHP-CS-Fixer)
-      run: vendor/bin/php-cs-fixer fix --dry-run --diff
+      run: vendor/bin/php-cs-fixer fix --dry-run --diff --allow-risky=yes
 
     - name: Run Static Analysis (PHPStan)
       run: vendor/bin/phpstan analyse --level=2 admin includes      
