@@ -73,7 +73,7 @@ function setupForms() {
             const submitBtn = this.querySelector('button[type="submit"]');
             toggleButton(submitBtn, true);
             try {
-                const response = await fetch('reset_password.php', { method: 'POST', body: new FormData(this) });
+                const response = await fetch('/admin/actions/reset_password.php', { method: 'POST', body: new FormData(this) });
                 const data = await response.json();
                 if (data.success) {
                     await Dialog.alert('موفقیت', 'رمز عبور با موفقیت تغییر یافت.');
@@ -195,13 +195,22 @@ function setupRequestActions() {
         btn.addEventListener('click', async function() {
             const requestId = this.dataset.id;
             try {
-                const response = await fetch(`get_request_details.php?id=${requestId}`);
+                const response = await fetch(`/admin/actions/get_request_details.php?id=${requestId}`);
                 const data = await response.json();
                 if (data.success) {
-                    document.getElementById('detail-tracking-code').textContent = data.request.tracking_code;
-                    document.getElementById('detail-fullname').textContent = data.request.fullname;
-                    document.getElementById('detail-username').textContent = data.request.username;
-                    // ... (سایر فیلدها)
+                        document.getElementById('detail-tracking-code').textContent = data.request.tracking_code;
+                        document.getElementById('detail-fullname').textContent = data.request.fullname;
+                        document.getElementById('detail-username').textContent = data.request.username;
+                        document.getElementById('detail-email').textContent = data.request.email;
+                        document.getElementById('detail-phone').textContent = data.request.phone;
+                        document.getElementById('detail-age').textContent = data.request.age;
+                        document.getElementById('detail-discord').textContent = data.request.discord_id;
+                        document.getElementById('detail-steam').textContent = data.request.steam_id;
+                        document.getElementById('detail-created-at').textContent = new Date(data.request.created_at).toLocaleString('fa-IR');
+                        document.getElementById('detail-status').textContent = 
+                            data.request.status === 'pending' ? 'در حال بررسی' :
+                            data.request.status === 'staff' ? 'استف' : 
+                            (data.request.status === 'approved' ? 'تایید شده' : 'رد شده');
                     document.getElementById('requestDetailsModal').style.display = 'block';
                     document.body.style.overflow = 'hidden';
                 } else {
@@ -214,87 +223,118 @@ function setupRequestActions() {
         });
     });
 
-    document.querySelectorAll('.approve-request').forEach(btn => {
-        btn.addEventListener('click', async function() {
-            const requestId = this.dataset.id;
-            const row = this.closest('tr');
-            if (await Dialog.confirm('تایید درخواست', 'آیا از تایید این درخواست و ایجاد کاربر اطمینان دارید؟')) {
-                try {
-                    const response = await fetch('process_request.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: `action=approve&id=${requestId}`
-                    });
-                    const data = await response.json();
-                    if (data.success) {
-                        showNotification('درخواست با موفقیت تایید شد', 'success');
-                        row.querySelector('.status-badge').className = 'status-badge approved';
-                        row.querySelector('.status-badge').textContent = 'تایید شده';
-                    } else {
-                        showNotification(data.message || 'خطا در تایید درخواست', 'error');
-                    }
-                } catch (error) {
-                    showNotification('خطا در ارتباط با سرور', 'error');
-                    console.error('Error:', error);
-                }
-            }
-        });
-    });
+document.querySelectorAll('.approve-request').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const requestId = this.dataset.id;
+        const row = this.closest('tr'); 
 
-    document.querySelectorAll('.staff-request').forEach(btn => {
-        btn.addEventListener('click', async function() {
-            const requestId = this.dataset.id;
-            const row = this.closest('tr');
-            if (await Dialog.confirm('تایید به عنوان استف', 'آیا از تایید این درخواست به عنوان استف اطمینان دارید؟ اطلاعات به سیستم مدیریت استف ها منتقل خواهد شد.')) {
-                try {
-                    const response = await fetch('process_request.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: `action=staff&id=${requestId}`
-                    });
-                    const data = await response.json();
-                    if (data.success) {
-                        showNotification('اطلاعات با موفقیت به سیستم استف ها منتقل شد', 'success');
-                        row.querySelector('.status-badge').className = 'status-badge staff';
-                        row.querySelector('.status-badge').textContent = 'Staff';
-                        row.querySelectorAll('.approve-request, .reject-request, .staff-request').forEach(b => b.disabled = true);
-                    } else {
-                        showNotification(data.message || 'خطا در انتقال به سیستم استف ها', 'error');
+        if (!row) {
+            console.error('ردیف والد برای دکمه approve-request پیدا نشد.');
+            return;
+        }
+
+        if (await Dialog.confirm('تایید درخواست', 'آیا از تایید این درخواست و ایجاد کاربر اطمینان دارید؟')) {
+            try {
+                const response = await fetch('/admin/actions/process_request.php', { // مسیر صحیح را بررسی کنید
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `action=approve&id=${requestId}`
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showNotification('درخواست با موفقیت تایید شد', 'success');
+                    const statusBadge = row.querySelector('.status-badge'); // بررسی وجود اِلِمان
+                    if (statusBadge) { // اگر statusBadge وجود داشت، آن را آپدیت کن
+                        statusBadge.className = 'status-badge approved';
+                        statusBadge.textContent = 'تایید شده';
                     }
-                } catch (error) {
-                    showNotification('خطا در ارتباط با سرور', 'error');
-                    console.error('Error:', error);
+                    // در داشبورد، چون این اِلِمان نیست، این بخش اجرا نمی‌شود و خطایی هم نمی‌دهد
+                } else {
+                    showNotification(data.message || 'خطا در تایید درخواست', 'error');
                 }
+            } catch (error) {
+                showNotification('خطا در ارتباط با سرور: ' + error.message, 'error');
+                console.error('Error in approve-request:', error);
             }
-        });
+        }
     });
-    
-    document.querySelectorAll('.reject-request').forEach(btn => {
-        btn.addEventListener('click', async function() {
-            const requestId = this.dataset.id;
-            const row = this.closest('tr');
-            if (await Dialog.confirm('رد درخواست', 'آیا از رد کردن این درخواست اطمینان دارید؟')) {
-                try {
-                    const response = await fetch('process_request.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: `action=reject&id=${requestId}`
-                    });
-                    const data = await response.json();
-                    if (data.success) {
-                        showNotification('درخواست با موفقیت رد شد', 'success');
-                        row.querySelector('.status-badge').className = 'status-badge rejected';
-                        row.querySelector('.status-badge').textContent = 'رد شده';
-                    } else {
-                        showNotification(data.message || 'خطا در رد درخواست', 'error');
+});
+
+document.querySelectorAll('.staff-request').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const requestId = this.dataset.id;
+        const row = this.closest('tr');
+
+        if (!row) {
+            console.error('ردیف والد برای دکمه staff-request پیدا نشد.');
+            return;
+        }
+
+        if (await Dialog.confirm('تایید به عنوان استف', 'آیا از تایید این درخواست به عنوان استف اطمینان دارید؟ اطلاعات به سیستم مدیریت استف ها منتقل خواهد شد.')) {
+            try {
+                const response = await fetch('/admin/actions/process_request.php', { // مسیر صحیح را بررسی کنید
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `action=staff&id=${requestId}`
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showNotification('اطلاعات با موفقیت به سیستم استف ها منتقل شد', 'success');
+                    const statusBadge = row.querySelector('.status-badge');
+                    if (statusBadge) { // اگر statusBadge وجود داشت، آن را آپدیت کن
+                        statusBadge.className = 'status-badge staff';
+                        statusBadge.textContent = 'Staff';
                     }
-                } catch (error) {
-                    showNotification('خطا در ارتباط با سرور', 'error');
-                    console.error('Error:', error);
+                    // غیرفعال کردن سایر دکمه‌ها در همان ردیف (اگر وجود دارند)
+                    row.querySelectorAll('.approve-request, .reject-request, .staff-request').forEach(b => {
+                        if(b) b.disabled = true; // بررسی وجود دکمه قبل از غیرفعال کردن
+                    });
+                } else {
+                    showNotification(data.message || 'خطا در انتقال به سیستم استف ها', 'error');
                 }
+            } catch (error) {
+                showNotification('خطا در ارتباط با سرور: ' + error.message, 'error');
+                console.error('Error in staff-request:', error);
             }
-        });
+        }
     });
+});
+
+document.querySelectorAll('.reject-request').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const requestId = this.dataset.id;
+        const row = this.closest('tr');
+
+        if (!row) {
+            console.error('ردیف والد برای دکمه reject-request پیدا نشد.');
+            return;
+        }
+
+        if (await Dialog.confirm('رد درخواست', 'آیا از رد کردن این درخواست اطمینان دارید؟')) {
+            try {
+                const response = await fetch('/admin/actions/process_request.php', { // مسیر صحیح را بررسی کنید
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `action=reject&id=${requestId}`
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showNotification('درخواست با موفقیت رد شد', 'success');
+                    const statusBadge = row.querySelector('.status-badge');
+                    if (statusBadge) { // اگر statusBadge وجود داشت، آن را آپدیت کن
+                        statusBadge.className = 'status-badge rejected';
+                        statusBadge.textContent = 'رد شده';
+                    }
+                } else {
+                    showNotification(data.message || 'خطا در رد درخواست', 'error');
+                }
+            } catch (error) {
+                showNotification('خطا در ارتباط با سرور: ' + error.message, 'error');
+                console.error('Error in reject-request:', error);
+            }
+        }
+    });
+});
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -306,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const checkUnreadAlerts = async () => {
         try {
-            const response = await fetch('includes/check_alerts.php');
+            const response = await fetch('/../includes/check_alerts.php');
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
             updateAlertCount(data.count || 0);
@@ -358,7 +398,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (unreadAlertsCount > 0) {
             await markAlertsAsRead();
         }
-        window.location.href = 'security_alerts.php';
+        window.location.href = '/admin/actions/security_alerts.php';
     });
 
     checkUnreadAlerts();
@@ -416,12 +456,60 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-// این بخش از کد حذف شد چون منطق آن به داخل توابع دیگر منتقل شد و دیگر به این شکل نیاز نیست.
-// document.addEventListener('DOMContentLoaded', function() {
-//     const securityAlertsBtn = document.getElementById('securityAlertsBtn');
-//     ...
-// });
+document.addEventListener('DOMContentLoaded', function() {
+    // راه‌اندازی اولیه کانتینرهای نوتیفیکیشن
+    createNotificationContainer('top-right');
+    createNotificationContainer('bottom-right');
 
+    // راه‌اندازی بخش‌های مختلف پنل
+    setupModals();
+    setupForms();
+    setupButtons();
+    setupRequestActions();
+    
+    // کد مربوط به بج هشدارهای امنیتی در سایدبار
+    const securityAlertsBtn = document.getElementById('sidebarSecurityAlertsBtn');
+    const alertBadge = document.getElementById('sidebarAlertBadge');
+    
+    if (securityAlertsBtn && alertBadge) {
+        let alertsCheckInterval;
+        const checkUnreadAlerts = async () => {
+            try {
+                // **مهم:** مسیر fetch را بر اساس ساختار پوشه‌های خود تنظیم کنید
+                // مثال: اگر پوشه includes در ریشه باشد: '../includes/check_alerts.php'
+                const response = await fetch('/../includes/check_alerts.php');
+                if (!response.ok) return;
+                const data = await response.json();
+                updateAlertCount(data.count || 0);
+            } catch (error) {
+                console.error('Error fetching alerts:', error);
+            }
+        };
+
+        const updateAlertCount = (count) => {
+            securityAlertsBtn.classList.remove('has-alerts', 'critical-alert-btn');
+            alertBadge.classList.remove('new-alert', 'critical-alert');
+            
+            if (count > 0) {
+                alertBadge.style.display = 'flex';
+                alertBadge.textContent = count > 9 ? '9+' : count;
+                if (count >= 5) {
+                    securityAlertsBtn.classList.add('critical-alert-btn');
+                    alertBadge.classList.add('critical-alert');
+                } else {
+                    securityAlertsBtn.classList.add('has-alerts');
+                    alertBadge.classList.add('new-alert');
+                }
+            } else {
+                alertBadge.style.display = 'none';
+            }
+        };
+
+        checkUnreadAlerts();
+        alertsCheckInterval = setInterval(checkUnreadAlerts, 15000);
+        window.addEventListener('beforeunload', () => clearInterval(alertsCheckInterval));
+    }
+});
 document.addEventListener('DOMContentLoaded', function() {
     setupModals();
     setupForms();
