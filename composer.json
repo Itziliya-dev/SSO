@@ -7,5 +7,9 @@
         "react/event-loop": "^1.5",
         "vlucas/phpdotenv": "^5.6",
         "pragmarx/google2fa-qrcode": "^3.0"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.75",
+        "phpstan/phpstan": "^2.1"
     }
 }
