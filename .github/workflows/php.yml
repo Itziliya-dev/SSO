@@ -29,8 +29,9 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-php-
 
-    - name: Install dependencies
-      run: composer install --prefer-dist --no-
+
+    - name: Install Dependencies
+      run: composer install --prefer-dist --no-progress
       
     - name: Check Coding Style (PHP-CS-Fixer)
       run: vendor/bin/php-cs-fixer fix --dry-run --diff
