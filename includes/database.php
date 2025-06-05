@@ -10,8 +10,9 @@ function getDbConnection() {
         $username = $_ENV['DB_USERNAME'];
         $password = $_ENV['DB_PASSWORD'];
         $dbname = $_ENV['DB_DATABASE'];
+        $port = (int)($_ENV['DB_PORT'] ?? 3306);
         
-        $conn = new mysqli($host, $username, $password, $dbname);
+        $conn = new mysqli($host, $username, $password, $dbname, $port);
         
         if ($conn->connect_error) {
             // لاگ کردن خطا بدون نمایش به کاربر
