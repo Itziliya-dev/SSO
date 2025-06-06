@@ -1,6 +1,6 @@
 # File: .github/workflows/php.yml
 
-name: PHP Composer & Code Style
+name: PHP CI & Auto-formatter
 
 on:
   push:
@@ -10,47 +10,47 @@ on:
 
 jobs:
   build:
-
+    # --- بخش اصلاح شده ---
+    # دسترسی‌ها باید مستقیماً زیر نام job (build) و در همین سطح قرار بگیرند
     permissions:
-      # دسترسی خواندن برای دریافت کد
-      contents: read
-      # دسترسی نوشتن برای کامیت کردن و پوش کردن تغییرات
-      pull-requests: write # یا 'contents: write' هم کار می‌کند
+      contents: write
 
-      runs-on: ubuntu-latest
+    # سیستم‌عامل باید بعد از permissions و در همان سطح باشد
+    runs-on: ubuntu-latest
+    # -------------------
 
     steps:
-      # مرحله ۱: دریافت کد (بدون تغییر)
-      - uses: actions/checkout@v4
+      # مرحله ۱: دریافت کد
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          # برای اینکه اکشن بتواند پوش کند، باید توکن را به آن بدهیم
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      # مرحله ۲: راه‌اندازی PHP (بدون تغییر)
+      # مرحله ۲: راه‌اندازی PHP
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
           extensions: mbstring, pdo_mysql
 
-      # مرحله ۳: نصب وابستگی‌ها (بدون تغییر)
+      # مرحله ۳: نصب وابستگی‌ها
       - name: Install Dependencies
         run: composer install --prefer-dist --no-progress
 
-      # مرحله ۴: اصلاح استایل کد (تغییر یافته)
+      # مرحله ۴: اصلاح خودکار استایل کد
       - name: Check & Fix Coding Style (PHP-CS-Fixer)
-        # فلگ --dry-run حذف شده تا فایل‌ها واقعاً اصلاح شوند
         run: vendor/bin/php-cs-fixer fix --allow-risky=yes
 
-      # مرحله ۵: کامیت خودکار تغییرات (مرحله جدید)
+      # مرحله ۵: کامیت خودکار تغییرات
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          # پیام کامیتی که ربات ثبت می‌کند
           commit_message: "style: Apply PHP-CS-Fixer coding style fixes"
-          # نام کاربری و ایمیل ربات
           commit_user_name: "GitHub Actions Bot"
           commit_user_email: "actions@github.com"
-          # نویسنده اصلی کامیت (شما که اکشن را فعال کردید)
           commit_author: "${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>"
 
-      # مرحله ۶: اجرای تحلیل استاتیک (بدون تغییر)
+      # مرحله ۶: اجرای تحلیل استاتیک
       - name: Run Static Analysis (PHPStan)
         run: vendor/bin/phpstan analyse --level=2 admin includes
