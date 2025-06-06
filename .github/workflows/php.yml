@@ -10,7 +10,14 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+
+    permissions:
+      # دسترسی خواندن برای دریافت کد
+      contents: read
+      # دسترسی نوشتن برای کامیت کردن و پوش کردن تغییرات
+      pull-requests: write # یا 'contents: write' هم کار می‌کند
+
+      runs-on: ubuntu-latest
 
     steps:
       # مرحله ۱: دریافت کد (بدون تغییر)
