@@ -12,32 +12,30 @@ if (!isset($_SESSION['is_owner']) || !$_SESSION['is_owner']) {
     exit();
 }
 
+// --- بخش اصلاح شده ---
+// ۱. تمام متغیرها را در ابتدای فایل با مقدار پیش‌فرض تعریف می‌کنیم
 $message = '';
 $message_type = '';
-$username_val = '';
-$fullname_val = '';
-$email_val = '';
-$phone_val = '';
-
+$username = '';
+$fullname = '';
+$email = '';
+$phone = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $conn = null;
     try {
-        $conn = getDbConnection();
-        $password = $_POST['password'];
-        $email = trim($_POST['email']) ?: null;
-        $phone = trim($_POST['phone']) ?: null;
-        $fullname = trim($_POST['fullname']) ?: $username;
-
-        // ذخیره مقادیر برای نمایش مجدد در فرم در صورت خطا
-        $username_val = $username;
-        $fullname_val = $fullname;
-        $email_val = $email;
-        $phone_val = $phone;
+        // ۲. مقادیر را از POST دریافت می‌کنیم. متغیرها از قبل تعریف شده‌اند.
+        $username = trim($_POST['username'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $email = trim($_POST['email'] ?? null);
+        $phone = trim($_POST['phone'] ?? null);
+        $fullname = trim($_POST['fullname'] ?? '') ?: $username;
 
         $has_user_panel = isset($_POST['access_user_panel']) ? 1 : 0;
         $is_owner_permission = isset($_POST['access_admin_panel']) ? 1 : 0;
         $is_staff_checkbox = isset($_POST['is_staff']) ? 1 : 0;
+        
+        $conn = getDbConnection();
 
         if (empty($username) || empty($password)) {
             throw new Exception("نام کاربری و رمز عبور الزامی هستند.");
@@ -46,7 +44,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $hashed_password = password_hash($password, PASSWORD_BCRYPT);
 
         if ($is_staff_checkbox) {
-            // [اصلاح شده] باگ اصلی اینجا بود. تعداد ستون‌ها و متغیرها باید یکی باشد.
             $stmt = $conn->prepare("INSERT INTO `staff-manage` (username, password, email, phone, fullname, is_active, is_verify) VALUES (?, ?, ?, ?, ?, 1, 1)");
             $stmt->bind_param("sssss", $username, $hashed_password, $email, $phone, $fullname);
             $message_text = "استف";
@@ -60,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = "$message_text '$username' با موفقیت ایجاد شد.";
             $message_type = 'success';
             // پاک کردن مقادیر پس از موفقیت
-            $username_val = $fullname_val = $email_val = $phone_val = '';
+            $username = $fullname = $email = $phone = '';
         } else {
             throw new Exception($stmt->error);
         }
@@ -68,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     } catch (Exception $e) {
         $message = "خطا: " . $e->getMessage();
+        // ۳. حالا اینجا $username همیشه تعریف شده است (حتی اگر خالی باشد)
         if (isset($conn) && $conn->errno == 1062) {
             $message = "خطا: نام کاربری '$username' قبلاً استفاده شده است.";
         }
@@ -78,11 +76,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // برای سایدبار
-$currentPage = 'create_user'; // شناسه صفحه فعلی
-$pending_requests_count = 0; // مقدار پیش‌فرض
+$currentPage = 'create_user';
+$pending_requests_count = 0;
 $conn_sidebar = getDbConnection();
 if ($conn_sidebar) {
-    $pending_requests_count = $conn_sidebar->query("SELECT COUNT(id) as count FROM `registration_requests` WHERE status = 'pending'")->fetch_assoc()['count'];
+    $pending_requests_count_result = $conn_sidebar->query("SELECT COUNT(id) as count FROM `registration_requests` WHERE status = 'pending'");
+    if ($pending_requests_count_result) {
+        $pending_requests_count = $pending_requests_count_result->fetch_assoc()['count'];
+    }
     $conn_sidebar->close();
 }
 ?>
@@ -102,7 +103,7 @@ if ($conn_sidebar) {
 
 <div class="admin-layout">
     
-    <?php include __DIR__.'/../includes/_sidebar.php'; // <-- فراخوانی سایدبار مشترک --> ?>
+    <?php include __DIR__.'/../_sidebar.php'; ?>
     
     <main class="main-content">
         <header class="main-header">
@@ -117,10 +118,11 @@ if ($conn_sidebar) {
                 </div>
             <?php endif; ?>
 
-            <form method="POST" action="create_user.php"> <div class="form-row">
+            <form method="POST" action="create_user.php">
+                <div class="form-row">
                     <div class="form-group">
                         <label for="username">نام کاربری:</label>
-                        <input type="text" id="username" name="username" class="form-control" value="<?= htmlspecialchars($username_val) ?>" required>
+                        <input type="text" id="username" name="username" class="form-control" value="<?= htmlspecialchars($username) ?>" required>
                     </div>
                     <div class="form-group">
                         <label for="password">رمز عبور:</label>
@@ -130,17 +132,17 @@ if ($conn_sidebar) {
                 <div class="form-row">
                     <div class="form-group">
                         <label for="fullname">نام کامل (اختیاری):</label>
-                        <input type="text" id="fullname" name="fullname" class="form-control" value="<?= htmlspecialchars($fullname_val) ?>">
+                        <input type="text" id="fullname" name="fullname" class="form-control" value="<?= htmlspecialchars($fullname) ?>">
                     </div>
                 </div>
                  <div class="form-row">
                     <div class="form-group">
                         <label for="email">ایمیل (اختیاری):</label>
-                        <input type="email" id="email" name="email" class="form-control" value="<?= htmlspecialchars($email_val) ?>">
+                        <input type="email" id="email" name="email" class="form-control" value="<?= htmlspecialchars($email) ?>">
                     </div>
                     <div class="form-group">
                         <label for="phone">تلفن (اختیاری):</label>
-                        <input type="tel" id="phone" name="phone" class="form-control" value="<?= htmlspecialchars($phone_val) ?>">
+                        <input type="tel" id="phone" name="phone" class="form-control" value="<?= htmlspecialchars($phone) ?>">
                     </div>
                 </div>
 
@@ -150,9 +152,7 @@ if ($conn_sidebar) {
                         <input type="checkbox" name="is_staff" value="1" id="is_staff_checkbox">
                         این کاربر **استف** است (اطلاعات در جدول `staff-manage` ذخیره می‌شود)
                     </label>
-                    <small class="form-hint">
-                        توصیه می‌شود استف‌ها از طریق فرم درخواست ثبت‌نام کنند تا تمام اطلاعاتشان به طور کامل ثبت شود.
-                    </small>
+                    <small class="form-hint">توصیه می‌شود استف‌ها از طریق فرم درخواست ثبت‌نام کنند تا تمام اطلاعاتشان به طور کامل ثبت شود.</small>
                 </div>
                 
                 <div class="checkbox-group" id="user_permissions_group">
@@ -181,7 +181,6 @@ if ($conn_sidebar) {
         const userPermissionsGroup = document.getElementById('user_permissions_group');
 
         function togglePermissionsView() {
-            // اگر چک‌باکس "استف" تیک خورده باشد، بخش دسترسی‌های کاربر عادی مخفی می‌شود
             if (userPermissionsGroup) {
                 userPermissionsGroup.style.display = isStaffCheckbox.checked ? 'none' : 'block';
             }
@@ -189,7 +188,6 @@ if ($conn_sidebar) {
 
         if (isStaffCheckbox) {
             isStaffCheckbox.addEventListener('change', togglePermissionsView);
-            // اجرای اولیه برای تنظیم نمایش در هنگام بارگذاری صفحه
             togglePermissionsView();
         }
     });
