@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($username) || empty($password)) {
             throw new Exception("نام کاربری و رمز عبور الزامی هستند.");
         }
-        
+
         $hashed_password = password_hash($password, PASSWORD_BCRYPT);
 
         if ($is_staff_checkbox) {
@@ -73,7 +73,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $message_type = 'error';
     } finally {
-        if ($conn) $conn->close();
+        if ($conn) {
+            $conn->close();
+        }
     }
 }
 
@@ -102,7 +104,7 @@ if ($conn_sidebar) {
 
 <div class="admin-layout">
     
-    <?php include __DIR__.'/../includes/_sidebar.php'; // <-- فراخوانی سایدبار مشترک --> ?>
+    <?php include __DIR__.'/../includes/_sidebar.php'; // <-- فراخوانی سایدبار مشترک -->?>
     
     <main class="main-content">
         <header class="main-header">

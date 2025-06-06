@@ -3,7 +3,7 @@
         'name' => 'itziliya-dev/sso-system',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'ea4879f7e96069f44a20d55769ffb4844f647fdc',
+        'reference' => '10f138c9fee8af17fd04dabfa388a6edeacdc663',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -103,7 +103,7 @@
         'itziliya-dev/sso-system' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'ea4879f7e96069f44a20d55769ffb4844f647fdc',
+            'reference' => '10f138c9fee8af17fd04dabfa388a6edeacdc663',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
