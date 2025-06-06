@@ -14,7 +14,6 @@ if (!isset($_SESSION['is_owner']) || !$_SESSION['is_owner']) {
 
 $message = '';
 $message_type = '';
-// مقداردهی اولیه متغیرها برای جلوگیری از خطا
 $username_val = '';
 $fullname_val = '';
 $email_val = '';
@@ -25,8 +24,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $conn = null;
     try {
         $conn = getDbConnection();
-
-        $username = trim($_POST['username']);
         $password = $_POST['password'];
         $email = trim($_POST['email']) ?: null;
         $phone = trim($_POST['phone']) ?: null;
@@ -45,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($username) || empty($password)) {
             throw new Exception("نام کاربری و رمز عبور الزامی هستند.");
         }
-
+        
         $hashed_password = password_hash($password, PASSWORD_BCRYPT);
 
         if ($is_staff_checkbox) {
@@ -76,9 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $message_type = 'error';
     } finally {
-        if ($conn) {
-            $conn->close();
-        }
+        if ($conn) $conn->close();
     }
 }
 
@@ -107,7 +102,7 @@ if ($conn_sidebar) {
 
 <div class="admin-layout">
     
-    <?php include __DIR__.'/../includes/_sidebar.php'; // <-- فراخوانی سایدبار مشترک -->?>
+    <?php include __DIR__.'/../includes/_sidebar.php'; // <-- فراخوانی سایدبار مشترک --> ?>
     
     <main class="main-content">
         <header class="main-header">
