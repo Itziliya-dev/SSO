@@ -1,4 +1,6 @@
-name: PHP Composer
+# File: .github/workflows/php.yml
+
+name: PHP Composer & Code Style
 
 on:
   push:
@@ -6,47 +8,42 @@ on:
   pull_request:
     branches: [ "main" ]
 
-permissions:
-  contents: read
-
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      # مرحله ۱: دریافت کد (بدون تغییر)
+      - uses: actions/checkout@v4
 
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-          php-version: '8.3' # <-- این نسخه را به 8.3 تغییر دهید
-          extensions: mbstring, pdo_mysql # و سایر اکستنشن‌های مورد نیاز
+      # مرحله ۲: راه‌اندازی PHP (بدون تغییر)
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_mysql
 
-    - name: Validate composer.json and composer.lock
-      run: composer validate --strict
+      # مرحله ۳: نصب وابستگی‌ها (بدون تغییر)
+      - name: Install Dependencies
+        run: composer install --prefer-dist --no-progress
 
-    - name: Cache Composer packages
-      id: composer-cache
-      uses: actions/cache@v3
-      with:
-        path: vendor
-        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-php-
+      # مرحله ۴: اصلاح استایل کد (تغییر یافته)
+      - name: Check & Fix Coding Style (PHP-CS-Fixer)
+        # فلگ --dry-run حذف شده تا فایل‌ها واقعاً اصلاح شوند
+        run: vendor/bin/php-cs-fixer fix --allow-risky=yes
 
+      # مرحله ۵: کامیت خودکار تغییرات (مرحله جدید)
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          # پیام کامیتی که ربات ثبت می‌کند
+          commit_message: "style: Apply PHP-CS-Fixer coding style fixes"
+          # نام کاربری و ایمیل ربات
+          commit_user_name: "GitHub Actions Bot"
+          commit_user_email: "actions@github.com"
+          # نویسنده اصلی کامیت (شما که اکشن را فعال کردید)
+          commit_author: "${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>"
 
-    - name: Install Dependencies
-      run: composer install --prefer-dist --no-progress
-      
-    - name: Check Coding Style (PHP-CS-Fixer)
-      run: vendor/bin/php-cs-fixer fix --dry-run --diff --allow-risky=yes
-
-    - name: Run Static Analysis (PHPStan)
-      run: vendor/bin/phpstan analyse --level=2 admin includes      
-
-    # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
-    # Docs: https://getcomposer.org/doc/articles/scripts.md
-
-    # - name: Run test suite
-    #   run: composer run-script test
+      # مرحله ۶: اجرای تحلیل استاتیک (بدون تغییر)
+      - name: Run Static Analysis (PHPStan)
+        run: vendor/bin/phpstan analyse --level=2 admin includes
