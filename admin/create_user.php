@@ -104,6 +104,7 @@ if ($conn_sidebar) {
 <div class="admin-layout">
     
     <?php include __DIR__.'/../_sidebar.php'; ?>
+
     
     <main class="main-content">
         <header class="main-header">
