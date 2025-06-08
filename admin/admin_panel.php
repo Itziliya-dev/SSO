@@ -99,10 +99,6 @@ $staff_count = $conn->query("SELECT COUNT(id) as count FROM `staff-manage` WHERE
     <?php include __DIR__.'/../includes/_sidebar.php'; // ۳. فراخوانی سایدبار از فایل مجزا?>
 
     <main class="main-content">
-        <header class="main-header">
-            <h1 class="header-title">داشبورد</h1>
-            <a href="create_user.php" class="btn-primary"><i class="fas fa-user-plus"></i><span>ایجاد کاربر جدید</span></a>
-        </header>
 
         <section class="dashboard-stats">
             <div class="stat-card">

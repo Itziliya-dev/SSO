@@ -21,6 +21,9 @@ $fullname = '';
 $email = '';
 $phone = '';
 
+$currentPage = 'create_user'; // ۱. تعریف صفحه فعلی برای فعال شدن لینک صحیح در سایدبار
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $conn = null;
     try {
@@ -103,7 +106,7 @@ if ($conn_sidebar) {
 
 <div class="admin-layout">
     
-    <?php include __DIR__.'/../_sidebar.php'; ?>
+    <?php include __DIR__.'/../includes/_sidebar.php'; ?>
 
     
     <main class="main-content">

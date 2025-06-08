@@ -27,6 +27,11 @@
         } ?>">
             <i class="fa-solid fa-users-line"></i><span>مدیریت استف‌ها</span>
         </a>
+        <a href="create_user.php" class="nav-link <?php if (isset($currentPage) && $currentPage === 'create_user') {
+            echo 'active';
+        } ?>">
+            <i class="fas fa-user-plus"></i><span>ایجاد کاربر</span>
+        </a>
         <a href="registration_requests_page.php" class="nav-link <?php if (isset($currentPage) && $currentPage === 'registration_requests') {
             echo 'active';
         } ?>">
@@ -39,6 +44,9 @@
             echo 'active';
         } ?>">
             <i class="fas fa-archive"></i><span>آرشیو</span>
+        </a>
+        <a href="management_chart.php" class="nav-link <?php if (isset($currentPage) && $currentPage === 'management_chart') echo 'active'; ?>">
+            <i class="fas fa-sitemap"></i><span>چارت مدیریت</span>
         </a>
         <a href="security_alerts.php" class="nav-link <?php if (isset($currentPage) && $currentPage === 'security_alerts') {
             echo 'active';
