@@ -1,43 +1,41 @@
 <?php
 require_once __DIR__.'/includes/config.php';
+require_once __DIR__.'/includes/header.php';
+
 session_start();
 
 $error = isset($_GET['error']) ? $_GET['error'] : '';
 $success = isset($_GET['success']) ? $_GET['success'] : '';
 $tracking_code = isset($_GET['tracking_code']) ? $_GET['tracking_code'] : '';
 ?>
-<!DOCTYPE html>
-<html dir="rtl" lang="fa">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ثبت نام | SSO Center</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/login_modern.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600&display=swap" rel="stylesheet">
-</head>
-<body>
-    <div class="background-image"></div>
-    
-    <div class="login-container">
-        <div class="login-box">
-            <div class="logo-wrapper">
-                <div class="logo-circle">
-                    <img src="assets/images/logo.png" alt="Logo" class="logo">
-                </div>
-                <h1>ثبت نام در سیستم</h1>
+<?php
+?>
+    <div class="login-wrapper">
+        <div class="login-showcase">
+            <div class="showcase-overlay"></div>
+        <div class="showcase-content">
+            <div class="logo-container">
+                <img src="assets/images/logo.png" alt="Logo" class="logo">
             </div>
+            <h1>به مجموعه ما بپیوندید</h1>
+            <p>با پر کردن فیلدهای روبه‌رو، اطلاعات خود را جهت احراز هویت وارد نمایید.</p>
+        </div>
+        </div>
+
+        <div class="login-form-container">
+            <h2>ایجاد حساب کاربری جدید</h2>
 
             <?php if ($error): ?>
-            <div class="alert">
-                <i class="fas fa-exclamation-circle"></i>
+            <div class="alert-message">
                 <?= htmlspecialchars($error) ?>
             </div>
             <?php endif; ?>
 
             <?php if ($success): ?>
             <div class="success-message">
-                <i class="fas fa-check-circle"></i>
                 <?= htmlspecialchars($success) ?>
                 <?php if ($tracking_code): ?>
                 <div class="tracking-code">
@@ -47,144 +45,56 @@ $tracking_code = isset($_GET['tracking_code']) ? $_GET['tracking_code'] : '';
             </div>
             <?php endif; ?>
 
-            <form action="process_register.php" method="POST" class="login-form">
-                <div class="input-group">
-                    <label for="fullname">
-                        <i class="fas fa-user-tag"></i>
-                        نام و نام خانوادگی
-                    </label>
-                    <input 
-                        type="text" 
-                        id="fullname" 
-                        name="fullname" 
-                        placeholder="نام کامل خود را وارد کنید" 
-                        required
-                    >
+            <form action="process_register.php" method="POST">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <input type="text" id="fullname" name="fullname" class="form-input" placeholder=" " required>
+                        <label for="fullname" class="form-label">نام و نام خانوادگی</label>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="username" name="username" class="form-input" placeholder=" " required>
+                        <label for="username" class="form-label">نام کاربری</label>
+                    </div>
                 </div>
 
-                <div class="input-group">
-                    <label for="username">
-                        <i class="fas fa-user"></i>
-                        نام کاربری
-                    </label>
-                    <input 
-                        type="text" 
-                        id="username" 
-                        name="username" 
-                        placeholder="نام کاربری دلخواه" 
-                        required
-                    >
+                <div class="form-group">
+                    <input type="password" id="password" name="password" class="form-input" placeholder=" " required>
+                    <label for="password" class="form-label">رمز عبور</label>
                 </div>
 
-                <div class="input-group">
-                    <label for="password">
-                        <i class="fas fa-lock"></i>
-                        رمز عبور
-                    </label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password" 
-                        placeholder="رمز عبور قوی انتخاب کنید" 
-                        required
-                    >
+                <div class="form-group">
+                    <input type="email" id="email" name="email" class="form-input" placeholder=" " required>
+                    <label for="email" class="form-label">آدرس ایمیل</label>
                 </div>
 
-                <div class="input-group">
-                    <label for="email">
-                        <i class="fas fa-envelope"></i>
-                        آدرس ایمیل
-                    </label>
-                    <input 
-                        type="email" 
-                        id="email" 
-                        name="email" 
-                        placeholder="example@domain.com" 
-                        required
-                    >
+                <div class="form-grid">
+                    <div class="form-group">
+                        <input type="tel" id="phone" name="phone" class="form-input" placeholder=" " required>
+                        <label for="phone" class="form-label">شماره تلفن</label>
+                    </div>
+                    <div class="form-group">
+                        <input type="number" id="age" name="age" class="form-input" min="13" max="100" placeholder=" " required>
+                        <label for="age" class="form-label">سن</label>
+                    </div>
                 </div>
 
-                <div class="input-group">
-                    <label for="phone">
-                        <i class="fas fa-phone"></i>
-                        شماره تلفن
-                    </label>
-                    <input 
-                        type="tel" 
-                        id="phone" 
-                        name="phone" 
-                        placeholder="09xxxxxxxxx" 
-                        required
-                    >
+                <div class="form-grid">
+                    <div class="form-group">
+                        <input type="text" id="discord_id" name="discord_id" class="form-input" placeholder=" " required>
+                        <label for="discord_id" class="form-label">آیدی دیسکورد</label>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="steam_id" name="steam_id" class="form-input" placeholder=" " required>
+                        <label for="steam_id" class="form-label">آیدی استیم</label>
+                    </div>
                 </div>
-
-                <div class="input-group">
-                    <label for="age">
-                        <i class="fas fa-birthday-cake"></i>
-                        سن
-                    </label>
-                    <input 
-                        type="number" 
-                        id="age" 
-                        name="age" 
-                        min="13" 
-                        max="100" 
-                        required
-                    >
-                </div>
-
-                <div class="input-group">
-                    <label for="discord_id">
-                        <i class="fab fa-discord"></i>
-                        آیدی دیسکورد
-                    </label>
-                    <input 
-                        type="text" 
-                        id="discord_id" 
-                        name="discord_id" 
-                        placeholder="Username#1234" 
-                        required
-                    >
-                </div>
-
-                <div class="input-group">
-                    <label for="steam_id">
-                        <i class="fab fa-steam"></i>
-                        آیدی استیم
-                    </label>
-                    <input 
-                        type="text" 
-                        id="steam_id" 
-                        name="steam_id" 
-                        placeholder="STEAM_0:0:12345678" 
-                        required
-                    >
-                </div>
-
-                <button type="submit" class="login-btn">
-                    <span>ثبت درخواست</span>
-                    <i class="fas fa-arrow-left"></i>
-                </button>
+                
+                <button type="submit" class="login-button">ارسال درخواست ثبت نام</button>
             </form>
-
-            <div class="register-links">
-                <a href="login.php">ورود به حساب کاربری</a>
-                <a href="track_request.php">استعلام کد پیگیری</a>
+            <div class="register-link">
+                قبلاً ثبت نام کرده‌اید؟ <a href="login.php">وارد شوید</a>
             </div>
         </div>
     </div>
-    <script>
-  document.addEventListener("DOMContentLoaded", function() {
-    // Option 1: Add a class that sets opacity to 1.
-    const loginContainer = document.querySelector('.login-container');
-    if (loginContainer) {
-      loginContainer.classList.add('show');
-    }
-
-    // Option 2: Alternatively, directly change the style property.
-    // loginContainer.style.opacity = '1';
-  });
-</script>
-
 </body>
 </html>

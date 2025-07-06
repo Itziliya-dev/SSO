@@ -55,7 +55,7 @@ try {
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        throw new Exception('Username or email already registered');
+        throw new Exception('این مشخصات قبلا ثبت شده است');
     }
 
     // Generate tracking code
@@ -71,7 +71,7 @@ try {
     $stmt->execute();
 
     // Redirect to the registration page with a success message and tracking code
-    header('Location: register.php?success=' . urlencode('Registration request submitted successfully') . '&tracking_code=' . urlencode($tracking_code));
+    header('Location: register.php?success=' . urlencode('درخواست شما با موفقیت ثبت شد') . '&tracking_code=' . urlencode($tracking_code));
     exit();
 
 } catch (Exception $e) {

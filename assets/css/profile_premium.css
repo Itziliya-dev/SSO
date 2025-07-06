@@ -1,0 +1,148 @@
+/* Import Font & Variables from dashboard styles */
+@import url('dashboard_premium.css');
+
+/* Page layout for profile */
+body {
+    padding-top: 100px; /* More space for header */
+    padding-bottom: 40px;
+    background-image: url('../images/background.jpg');
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+.profile-page-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Base card style for profile page */
+.profile-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 25px 30px;
+    margin-bottom: 25px;
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.profile-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+.profile-card-header .fas, .profile-card-header .fab {
+    color: var(--accent-blue);
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 20px;
+}
+.form-group label {
+    display: block;
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+.form-control {
+    width: 100%;
+    padding: 12px;
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 15px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-control:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px var(--accent-blue-glow);
+}
+.form-control[readonly] {
+    background: rgba(0,0,0,0.2);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.form-hint {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent-blue);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+}
+.submit-btn:hover {
+    background: #2563eb;
+    transform: translateY(-2px);
+}
+
+.back-link {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: var(--accent-blue);
+    text-decoration: none;
+    font-size: 14px;
+}
+
+/* Message/Notification Styles */
+.message {
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    border: 1px solid;
+}
+.message.success { background-color: rgba(16, 185, 129, 0.1); color: var(--accent-green); border-color: var(--accent-green); }
+.message.error { background-color: rgba(239, 68, 68, 0.1); color: var(--accent-red); border-color: var(--accent-red); }
+.message.info { background-color: rgba(59, 130, 246, 0.1); color: var(--accent-blue); border-color: var(--accent-blue); }
+
+/* Discord Status Box Styles */
+.discord-status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+.discord-status-item:last-child { border-bottom: none; }
+.discord-status-item .label { color: var(--text-secondary); }
+.discord-status-item .value { font-weight: 500; }
+.status-verified { color: var(--accent-green); }
+.status-not-verified { color: var(--accent-yellow); }
+
+.discord-connect-prompt {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--accent-yellow);
+    border-radius: 8px;
+    text-align: center;
+}
+.discord-connect-prompt code {
+    background: rgba(0,0,0,0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+}

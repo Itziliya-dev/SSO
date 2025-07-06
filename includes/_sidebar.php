@@ -54,6 +54,12 @@
             <i class="fas fa-bell"></i><span>هشدارهای امنیتی</span>
             <span class="alert-badge" id="sidebarAlertBadge" style="display: none;"></span>
         </a>
+        <a href="settings_page.php" class="nav-link <?php if (isset($currentPage) && $currentPage === 'settings') {
+            echo 'active';
+        } ?>" id="sidebarSecurityAlertsBtn">
+            <i class="fas fa-cog"></i><span>تنظیمات</span>
+            <span class="alert-badge" id="sidebarAlertBadge" style="display: none;"></span>
+        </a>
         </nav>
     <div class="sidebar-footer">
         <a href="/Dashboard/dashboard.php" class="nav-link">

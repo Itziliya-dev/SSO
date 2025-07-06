@@ -1,0 +1,176 @@
+/* File: OldSSO/assets/css/passkey_premium.css */
+
+/* وارد کردن متغیرها و استایل‌های پایه از داشبورد */
+@import url('dashboard_premium.css');
+
+/* طرح‌بندی صفحه مدیریت کلیدهای عبور */
+body {
+    padding-top: 100px; /* فضا برای هدر */
+    padding-bottom: 40px;
+    background-image: url('../images/background.jpg');
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+.passkey-page-container {
+    max-width: 850px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.passkey-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 25px 30px;
+    margin-bottom: 25px;
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.passkey-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 25px;
+}
+.passkey-card-header .fas {
+    color: var(--accent-blue);
+}
+
+.passkey-card .form-hint {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: -15px;
+    margin-bottom: 20px;
+    line-height: 1.7;
+}
+
+.add-passkey-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent-green);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.add-passkey-btn:hover {
+    background-color: #059669;
+    transform: translateY(-2px);
+}
+
+/* لیست کلیدهای ثبت شده */
+.passkey-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.passkey-item {
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.passkey-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.passkey-info .fas {
+    font-size: 20px;
+    color: var(--text-secondary);
+}
+.passkey-details .name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+.passkey-details .date {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.delete-passkey-btn {
+    background: transparent;
+    border: 1px solid var(--accent-red);
+    color: var(--accent-red);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+.delete-passkey-btn:hover {
+    background: var(--accent-red);
+    color: #fff;
+}
+
+/* مودال تایید حذف */
+.confirm-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(17, 24, 39, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+    display: none; /* به صورت پیش‌فرض مخفی است */
+    justify-content: center;
+    align-items: center;
+}
+.confirm-modal-box {
+    background: var(--bg-card);
+    padding: 30px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+    max-width: 400px;
+}
+.confirm-modal-box h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+.confirm-modal-box p {
+    color: var(--text-secondary);
+    margin-bottom: 25px;
+}
+.modal-actions {
+    display: flex;
+    gap: 15px;
+}
+.modal-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.btn-cancel {
+    background: var(--border-color);
+    color: var(--text-primary);
+}
+.btn-confirm-delete {
+    background: var(--accent-red);
+    color: #fff;
+}

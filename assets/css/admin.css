@@ -1,6 +1,4 @@
 /* فونت‌های پروژه */
-@import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts.css');
-
 /* متغیرهای رنگ و طرح‌بندی */
 :root {
     /* رنگ‌های اصلی */
@@ -706,6 +704,119 @@ label {
 /* افکت‌های بصری برای جلب توجه */
 .vibration-effect {
     animation: vibrate 0.3s linear infinite;
+}
+
+/* استایل برای نوار پیشرفت آپلود */
+.progress-container {
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    width: 0%;
+    height: 20px;
+    background-color: var(--primary-color);
+    text-align: center;
+    line-height: 20px;
+    color: white;
+    transition: width 0.3s ease;
+    font-size: 12px;
+}
+/* ========================================= */
+/* استایل‌های تب برای صفحه تنظیمات            */
+/* ========================================= */
+.tabs-nav {
+    display: flex;
+    border-bottom: 1px solid var(--card-border);
+    margin-bottom: 20px;
+}
+.tab-link {
+    padding: 12px 20px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    font-family: var(--font-secondary);
+    transition: all 0.2s ease-in-out;
+    border-bottom: 3px solid transparent;
+}
+.tab-link:hover {
+    color: var(--text-primary);
+}
+.tab-link.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    font-weight: 600;
+}
+.tab-content {
+    display: none; /* در حالت عادی مخفی است */
+}
+.tab-content.active {
+    display: block; /* تب فعال نمایش داده می‌شود */
+    animation: fadeIn 0.5s;
+}
+
+/* ========================================= */
+/* استایل‌های تب راهنمای توسعه‌دهنده        */
+/* ========================================= */
+
+.info-row {
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.info-row:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.info-row label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    font-weight: 600; /* کمی ضخیم‌تر برای تمایز */
+    font-size: 15px;
+}
+
+.info-value {
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
+    font-size: 14px;
+    word-wrap: break-word; /* برای شکستن مسیرهای طولانی */
+}
+
+.info-value ul {
+    list-style-type: disc;
+    padding-right: 20px; /* برای نمایش صحیح در حالت راست‌چین */
+    margin: 0;
+}
+
+.info-value li {
+    margin-bottom: 8px;
+}
+.info-value li:last-child {
+    margin-bottom: 0;
+}
+
+/* فونت مخصوص برای نمایش کد و مسیرها */
+.code-font {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    direction: ltr;
+    text-align: left;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes vibrate {

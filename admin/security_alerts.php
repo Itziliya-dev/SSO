@@ -5,6 +5,8 @@ ini_set('display_errors', 1);
 
 require_once __DIR__.'/../includes/config.php';
 require_once __DIR__.'/../includes/auth_functions.php';
+require_once __DIR__.'/../includes/header.php';
+
 
 session_start();
 
@@ -47,19 +49,13 @@ $alerts_result = $conn->query("
 // برای بج درخواست‌ها در سایدبار
 $pending_requests_count = $conn->query("SELECT COUNT(id) as count FROM `registration_requests` WHERE status = 'pending'")->fetch_assoc()['count'];
 ?>
-<!DOCTYPE html>
-<html dir="rtl" lang="fa">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>هشدارهای امنیتی | پنل مدیریت</title>
     
     <link rel="stylesheet" href="/../assets/css/admin.css">
     <link rel="stylesheet" href="/../assets/css/admin_dashboard_redesign.css">
     <link rel="stylesheet" href="/../assets/css/custom-dialog.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link rel="stylesheet" href="/assets/fonts/Vazirmatn-font-face.css">    
     <style>
         /* استایل‌های سفارشی برای این صفحه که با تم جدید هماهنگ شده‌اند */
         .status-badge.status-new { background-color: rgba(var(--warning-color-rgb, 255, 193, 7), 0.2); color: var(--warning-color, #ffc107); }
@@ -75,8 +71,8 @@ $pending_requests_count = $conn->query("SELECT COUNT(id) as count FROM `registra
             --success-color-rgb: 0, 200, 83;
         }
     </style>
-</head>
-<body>
+<?php
+?>
 
 <div class="admin-layout">
     <?php include __DIR__.'/../includes/_sidebar.php'; // ۳. فراخوانی سایدبار از فایل مجزا?>

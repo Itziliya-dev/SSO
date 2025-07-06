@@ -4,6 +4,8 @@ ini_set('display_errors', 1);
 
 require_once __DIR__.'/../includes/config.php';
 require_once __DIR__.'/../includes/auth_functions.php';
+require_once __DIR__.'/../includes/header.php';
+
 
 session_start();
 
@@ -78,15 +80,10 @@ $conn = getDbConnection();
 $pending_requests_count = $conn->query("SELECT COUNT(id) as count FROM `registration_requests` WHERE status = 'pending'")->fetch_assoc()['count'];
 $conn->close();
 ?>
-<!DOCTYPE html>
-<html dir="rtl" lang="fa">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>پروفایل: <?= htmlspecialchars($discord_username) ?></title>
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="../assets/css/admin_dashboard_redesign.css">
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/fonts/Vazirmatn-font-face.css">
     <style>
         .profile-layout { display: flex; gap: 30px; flex-wrap: wrap-reverse; } /* reverse برای نمایش بهتر در موبایل */
         .profile-info-card { flex: 1; min-width: 300px; }
@@ -105,8 +102,8 @@ $conn->close();
         .info-grid .detail-label { font-weight: 500; color: var(--text-muted); }
         .info-grid .detail-value { font-weight: 600; color: var(--text-primary); }
     </style>
-</head>
-<body>
+<?php
+?>
 <div class="admin-layout">
     <?php include __DIR__.'/../includes/_sidebar.php'; ?>
     <main class="main-content">

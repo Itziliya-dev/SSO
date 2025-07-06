@@ -1,6 +1,12 @@
 <?php
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 require_once __DIR__.'/../includes/config.php';
 require_once __DIR__.'/../includes/auth_functions.php';
+require_once __DIR__.'/../includes/header.php';
+
 
 session_start();
 
@@ -28,19 +34,14 @@ $staff_count = $conn->query("SELECT COUNT(id) as count FROM `staff-manage` WHERE
 // کوئری قبلی که باعث خطا شد حذف و با کوئری صحیح جایگزین شد
 
 ?>
-<!DOCTYPE html>
-<html dir="rtl" lang="fa">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>داشبورد مدیریت | SSO Center</title>
     <link rel="stylesheet" href="/../assets/css/admin.css">
     <link rel="stylesheet" href="/../assets/css/admin_dashboard_redesign.css">
     <link rel="stylesheet" href="/../assets/css/custom-dialog.css">
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/fonts/Vazirmatn-font-face.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body>
+<?php
+?>
 <div id="requestDetailsModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__.'/../includes/config.php';
 require_once __DIR__.'/../includes/auth_functions.php';
+require_once __DIR__.'/../includes/header.php';
 
 session_start();
 
@@ -24,19 +25,13 @@ if ($result && $result->num_rows > 0) {
 $pending_requests_count = $conn->query("SELECT COUNT(id) as count FROM `registration_requests` WHERE status = 'pending'")->fetch_assoc()['count'];
 $conn->close();
 ?>
-<!DOCTYPE html>
-<html dir="rtl" lang="fa">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>آرشیو استف‌های دیموت شده | پنل مدیریت</title>
     
     <link rel="stylesheet" href="/../assets/css/admin.css">
     <link rel="stylesheet" href="/../assets/css/admin_dashboard_redesign.css">
     <link rel="stylesheet" href="/../assets/css/custom-dialog.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link rel="stylesheet" href="/assets/fonts/Vazirmatn-font-face.css">    
     <style>
         .info-notice {
             padding: 15px 20px;
@@ -58,8 +53,8 @@ $conn->close();
         .modal-reason { background-color: rgba(0,0,0,0.2); padding: 10px; border-radius: var(--border-radius-sm); white-space: pre-wrap; line-height: 1.8; color: var(--text-secondary); margin-top: 5px;}
         :root { --info-color-rgb: 33, 150, 243; }
     </style>
-</head>
-<body>
+<?php
+?>
 
 <div id="archiveDetailsModal" class="modal">
     <div class="modal-content">

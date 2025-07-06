@@ -1,5 +1,6 @@
 <?php
-
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 // فایل: auth.php (نسخه نهایی و اصلاح‌شده برای رفع ارور)
 
 require_once __DIR__.'/includes/config.php';

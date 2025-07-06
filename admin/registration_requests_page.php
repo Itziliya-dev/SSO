@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__.'/../includes/config.php';
 require_once __DIR__.'/../includes/auth_functions.php';
+require_once __DIR__.'/../includes/header.php';
 
 session_start();
 
@@ -38,18 +39,13 @@ $requests_result = $stmt->get_result();
 $pending_requests_count = $conn->query("SELECT COUNT(id) as count FROM `registration_requests` WHERE status = 'pending'")->fetch_assoc()['count'];
 
 ?>
-<!DOCTYPE html>
-<html dir="rtl" lang="fa">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مدیریت درخواست‌های ثبت‌نام | پنل مدیریت</title>
     <link rel="stylesheet" href="/../assets/css/admin.css">
     <link rel="stylesheet" href="/../assets/css/admin_dashboard_redesign.css">
     <link rel="stylesheet" href="/../assets/css/custom-dialog.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
+    <link rel="stylesheet" href="/assets/fonts/Vazirmatn-font-face.css">
+    
     <style>
         /* استایل برای دکمه‌های فیلتر */
         .filter-container {
@@ -79,8 +75,9 @@ $pending_requests_count = $conn->query("SELECT COUNT(id) as count FROM `registra
             border-color: var(--primary-color);
         }
     </style>
-</head>
-<body>
+<?php
+?>
+
 
 <div id="requestDetailsModal" class="modal">
     <div class="modal-content">

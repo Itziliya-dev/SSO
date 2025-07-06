@@ -5,6 +5,8 @@ ini_set('display_errors', 1);
 
 require_once __DIR__.'/../includes/config.php';
 require_once __DIR__.'/../includes/database.php'; // <--- این خط را اضافه کنید اگر تابع در این فایل است
+require_once __DIR__.'/../includes/header.php';
+
 
 // require_once __DIR__.'/../includes/auth_functions.php'; // برای getDbConnection، اگر در config.php نیست
 // getDbConnection باید در config.php یا database.php (که توسط config.php لود می‌شود) موجود باشد.
@@ -199,14 +201,10 @@ if ($conn) {
     $conn->close();
 }
 ?>
-<!DOCTYPE html>
-<html dir="rtl" lang="fa">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>ویرایش پروفایل | SSO Center</title>
     <link rel="stylesheet" href="/../assets/css/style.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/fonts/Vazirmatn-font-face.css">
     <style>
         /* استایل‌های عمومی که در پاسخ داشبورد هم استفاده شد */
         :root {
@@ -382,8 +380,8 @@ if ($conn) {
             color: #f87171;
         }
     </style>
-</head>
-<body>
+<?php
+?>
 <div class="background-image"></div>
 <div class="profile-container">
 <div class="profile-container">

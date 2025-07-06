@@ -1,11 +1,10 @@
 {
-    "name": "itziliya-dev/sso-system",
-    "description": "SSO Authentication System panel and services.",
-    "license": "proprietary",
     "require": {
-        "cboden/ratchet": "^0.4.4",
-        "react/event-loop": "^1.5",
-        "vlucas/phpdotenv": "^5.6",
-        "pragmarx/google2fa-qrcode": "^3.0"
+        "web-auth/webauthn-lib": "^4.7",
+        "paragonie/constant_time_encoding": "^2.6",
+        "ext-mysqli": "*",
+        "ext-json": "*",
+        "guzzlehttp/guzzle": "^7.8",
+        "vlucas/phpdotenv": "^5.6"
     }
 }

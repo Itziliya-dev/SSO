@@ -104,12 +104,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
             }
             break;
 
-        case 'delete_staff':
-            if ($staffId > 0) {
-                $stmt = $conn->prepare("DELETE FROM `staff-manage` WHERE id = ?");
-                $stmt->bind_param("i", $staffId);
-                $stmt->execute();
-                echo json_encode(['success' => true, 'message' => 'استف با موفقیت دیموت شد']);
+// این کیس جایگزین کیس 'delete_staff' می‌شود
+        case 'archive_staff':
+            // چک می‌کنیم که هر سه پارامتر لازم ارسال شده باشد
+            if ($staffId > 0 && isset($_POST['reason']) && isset($_POST['deleted_by'])) {
+                $reason = trim($_POST['reason']);
+                $deleted_by = trim($_POST['deleted_by']); // از فرم خوانده می‌شود
+
+            if (empty($reason) || empty($deleted_by)) {
+                echo json_encode(['success' => false, 'message' => 'لطفاً دلیل و نام دیموت کننده را وارد کنید.']);
+                exit();
+            }
+
+                // شروع تراکنش برای اطمینان از صحت عملیات
+                $conn->begin_transaction();
+
+                try {
+                    // مرحله ۱: خواندن اطلاعات کامل استف از جدول اصلی
+                    $stmt_select = $conn->prepare("SELECT * FROM `staff-manage` WHERE id = ?");
+                    $stmt_select->bind_param("i", $staffId);
+                    $stmt_select->execute();
+                    $staff_data = $stmt_select->get_result()->fetch_assoc();
+
+                    if ($staff_data) {
+                        // مرحله ۲: وارد کردن اطلاعات در جدول deleted_staff
+                        $stmt_insert = $conn->prepare(
+                            "INSERT INTO deleted_staff (original_id, fullname, username, email, phone, age, discord_id, discord_id2, steam_id, permissions, joined_at, deleted_at, delete_reason, deleted_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?)"
+                        );
+                        $stmt_insert->bind_param(
+                            "issssisssssss",
+                            $staff_data['id'],
+                            $staff_data['fullname'],
+                            $staff_data['username'],
+                            $staff_data['email'],
+                            $staff_data['phone'],
+                            $staff_data['age'],
+                            $staff_data['discord_id'],
+                            $staff_data['discord_id2'],
+                            $staff_data['steam_id'],
+                            $staff_data['permissions'],
+                            $staff_data['created_at'], // created_at از جدول اصلی معادل joined_at است
+                            $reason,
+                            $deleted_by
+                        );
+                        $stmt_insert->execute();
+
+                        // مرحله ۳: حذف استف از جدول اصلی
+                        $stmt_delete = $conn->prepare("DELETE FROM `staff-manage` WHERE id = ?");
+                        $stmt_delete->bind_param("i", $staffId);
+                        $stmt_delete->execute();
+
+                        // اگر همه چیز موفق بود، تراکنش را تایید کن
+                        $conn->commit();
+                        echo json_encode(['success' => true, 'message' => 'استف با موفقیت دیموت و آرشیو شد']);
+
+                    } else {
+                        throw new Exception('استف مورد نظر برای آرشیو یافت نشد.');
+                    }
+                } catch (Exception $e) {
+                    // اگر خطایی رخ داد، تمام تغییرات را لغو کن
+                    $conn->rollback();
+                    echo json_encode(['success' => false, 'message' => 'خطا در عملیات دیتابیس: ' . $e->getMessage()]);
+                }
+
+            } else {
+                echo json_encode(['success' => false, 'message' => 'اطلاعات ناقص است.']);
             }
             break;
         default:
@@ -118,6 +177,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
     exit();
 }
 
+require_once __DIR__.'/../includes/header.php'; 
 // --- بخش نمایش صفحه ---
 if (!isset($_SESSION['is_owner']) || !$_SESSION['is_owner']) {
     header('Location: login.php');
@@ -129,19 +189,13 @@ $conn = getDbConnection();
 $staff_result = $conn->query("SELECT * FROM `staff-manage` ORDER BY created_at DESC");
 $pending_requests_count = $conn->query("SELECT COUNT(id) as count FROM `registration_requests` WHERE status = 'pending'")->fetch_assoc()['count'];
 ?>
-<!DOCTYPE html>
-<html dir="rtl" lang="fa">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مدیریت استف‌ها | پنل مدیریت</title>
     
     <link rel="stylesheet" href="/../assets/css/admin.css">
     <link rel="stylesheet" href="/../assets/css/admin_dashboard_redesign.css">
     <link rel="stylesheet" href="/../assets/css/custom-dialog.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link rel="stylesheet" href="/assets/fonts/Vazirmatn-font-face.css">    
     <style>
         .status-badges-group { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
         .permission-badge.staff-perm { background-color: rgba(111, 66, 193, 0.2); color: #6f42c1; }
@@ -149,8 +203,8 @@ $pending_requests_count = $conn->query("SELECT COUNT(id) as count FROM `registra
         .modal-body .form-group { margin-bottom: 15px; }
         .modal-body .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
     </style>
-</head>
-<body>
+<?php
+?>
 
 <div id="staffModal" class="modal">
     <div class="modal-content">
@@ -194,7 +248,7 @@ $pending_requests_count = $conn->query("SELECT COUNT(id) as count FROM `registra
                             <tr data-id="<?= $staff['id'] ?>" data-search-term="<?= strtolower(htmlspecialchars($staff['fullname'] . ' ' . $staff['username'] . ' ' . $staff['email'])) ?>">
                                 <td>
                                     <div style="display: flex; align-items: center; gap: 10px;">
-                                        <div><strong><?= htmlspecialchars($staff['fullname']) ?></strong><div style="font-size: 12px; color: var(--text-muted);"><?= htmlspecialchars($staff['username']) ?></div></div>
+                                        <div><strong><?= htmlspecialchars($staff['fullname']) ?></strong><div class="staff-username" style="font-size: 12px; color: var(--text-muted);"><?= htmlspecialchars($staff['username']) ?></div></div>
                                     </div>
                                 </td>
                                 <td><span class="permission-badge staff-perm"><?= htmlspecialchars($staff['permissions'] ?? 'تعیین نشده') ?></span></td>
@@ -233,8 +287,11 @@ $pending_requests_count = $conn->query("SELECT COUNT(id) as count FROM `registra
 <div class="notification-container top-right"></div>
 
 <script src="/../assets/js/custom-dialog.js"></script>
+<script> const currentAdminUsername = "<?= htmlspecialchars($_SESSION['username'] ?? 'مدیر سیستم') ?>"; </script>
 <script>
+// دیگر به این متغیر برای دیموت نیازی نیست، اما ممکن است جاهای دیگر استفاده شو
 document.addEventListener('DOMContentLoaded', function() {
+    // --- مدیریت مودال اصلی ---
     const modal = document.getElementById('staffModal');
     const modalTitle = document.getElementById('staffModalTitle');
     const modalBody = document.getElementById('staffModalBody');
@@ -246,6 +303,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (event.target == modal) closeModal();
     });
 
+    // --- مدیریت جستجو در جدول ---
     document.getElementById('staffSearch').addEventListener('input', function() {
         const searchTerm = this.value.toLowerCase();
         document.querySelectorAll('#staff-table-body tr').forEach(row => {
@@ -253,13 +311,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // --- مدیریت تمام دکمه‌های عملیات ---
     document.getElementById('staff-table-body').addEventListener('click', async (e) => {
         const button = e.target.closest('.action-btn');
         if (!button || button.classList.contains('disabled')) return;
 
         const staffId = button.dataset.id;
         const staffRow = button.closest('tr');
-        const staffName = staffRow ? staffRow.querySelector('strong').textContent : 'استف';
+        const staffName = staffRow ? staffRow.querySelector('.staff-username').textContent : 'استف';
 
         if (button.classList.contains('view-details')) {
             showStaffDetails(staffId);
@@ -268,9 +327,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (button.classList.contains('reset-btn')) {
             showResetPasswordModal(staffId, staffName);
         } else if (button.classList.contains('delete-btn')) {
-            if (await Dialog.confirm('دیموت استف', `آیا از دیموت و حذف "${staffName}" اطمینان دارید؟`)) {
-                performAjaxAction({ action: 'delete_staff', staff_id: staffId }, true, true);
-            }
+            showDemoteModal(staffId, staffName);
         } else if (button.classList.contains('activate-btn')) {
             if (await Dialog.confirm('فعال کردن استف', `آیا از فعال کردن "${staffName}" اطمینان دارید؟`)) {
                 performAjaxAction({ action: 'activate_staff', staff_id: staffId }, true, true);
@@ -286,11 +343,47 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // --- توابع کمکی برای نمایش مودال‌ها ---
+
+    // ✅ تابع دیموت با فیلدهای قابل ویرایش
+    function showDemoteModal(staffId, staffName) {
+        modalTitle.textContent = `دیموت استف: ${staffName}`;
+        modalBody.innerHTML = `
+            <form id="demoteStaffForm">
+                <p>شما در حال دیموت کردن <strong>${staffName}</strong> هستید.</p>
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="demote-by">نام دیموت کننده:</label>
+                    <input type="text" id="demote-by" class="form-control" required placeholder="نام خود را وارد کنید...">
+                </div>
+                <div class="form-group">
+                    <label for="demote-reason">دلیل دیموت:</label>
+                    <textarea id="demote-reason" class="form-control" rows="3" required placeholder="مثال: عدم فعالیت، تخلف از قوانین..."></textarea>
+                </div>
+                <button type="submit" class="submit-btn danger-btn"><i class="fas fa-user-minus"></i> تایید و دیموت</button>
+            </form>
+        `;
+        modal.style.display = 'block';
+
+        document.getElementById('demoteStaffForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const deletedByName = document.getElementById('demote-by').value;
+            const reason = document.getElementById('demote-reason').value;
+            
+            if (!reason.trim() || !deletedByName.trim()) {
+                showNotification('وارد کردن هر دو فیلد الزامی است.', 'error');
+                return;
+            }
+            // ارسال نام دیموت کننده به همراه بقیه اطلاعات
+            await performAjaxAction({ action: 'archive_staff', staff_id: staffId, reason: reason, deleted_by: deletedByName }, true, true);
+            closeModal();
+        });
+    }
+
     async function showStaffDetails(staffId) {
         modalTitle.textContent = 'در حال بارگذاری...';
         modalBody.innerHTML = '<div style="text-align:center; padding: 20px;"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
         modal.style.display = 'block';
-        const result = await performAjaxAction({ action: 'get_staff_details', staff_id: staffId }, false, false); // No success notification, no reload
+        const result = await performAjaxAction({ action: 'get_staff_details', staff_id: staffId }, false, false);
         if (result && result.success) {
             const staff = result.staff;
             modalTitle.textContent = `جزئیات استف: ${staff.fullname}`;
@@ -360,10 +453,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // --- تابع اصلی برای ارسال درخواست‌های AJAX ---
+    
     async function performAjaxAction(data, showSuccessNotification = true, reloadPageOnSuccess = false) {
-        let button = null; // اگر دکمه خاصی بود برای loading
-        // (می‌توانید منطق پیدا کردن دکمه و loading را در صورت نیاز اضافه کنید)
-        
         try {
             const response = await fetch('staff_management.php', {
                 method: 'POST',
@@ -376,18 +468,20 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.success) {
                 if (showSuccessNotification) showNotification(result.message, 'success');
                 if (reloadPageOnSuccess) setTimeout(() => location.reload(), 1000);
-                return result; // مهم برای بازگرداندن اطلاعات به توابع دیگر
+                return result; 
             } else {
                 showNotification(result.message || 'یک خطای نامشخص رخ داد', 'error');
                 return null;
             }
         } catch (error) {
             console.error('AJAX Error:', error);
-            showNotification('خطا در ارتباط با سرور: ' + error.message, 'error');
+            showNotification('خطا در ارتباط با سرور، ممکن است مشکلی در پاسخ سرور وجود داشته باشد.', 'error');
             return null;
         }
     }
     
+    // --- تابع برای نمایش نوتیفیکیشن‌ها ---
+
     function showNotification(message, type = 'success', duration = 4000) {
         let container = document.querySelector('.notification-container.top-right');
         if (!container) {

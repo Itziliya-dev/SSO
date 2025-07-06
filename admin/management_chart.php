@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__.'/../includes/config.php';
 require_once __DIR__.'/../includes/auth_functions.php';
+require_once __DIR__.'/../includes/header.php';
 
 session_start();
 
@@ -10,16 +11,10 @@ if (!isset($_SESSION['is_owner']) || !$_SESSION['is_owner']) {
 }
 // دیگر نیازی به متغیرهای سایدبار در این صفحه نیست
 ?>
-<!DOCTYPE html>
-<html dir="rtl" lang="fa">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>چارت مدیریت | پنل مدیریت</title>
     
     <link rel="stylesheet" href="../assets/css/admin.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link rel="stylesheet" href="/assets/fonts/Vazirmatn-font-face.css">        
     <style>
         /* استایل‌های پایه برای حالت تمام-صفحه */
         body {
@@ -110,8 +105,8 @@ if (!isset($_SESSION['is_owner']) || !$_SESSION['is_owner']) {
         .card-developer .role, .card-developer .avatar { color: #2196f3; border-color: #2196f3;}
         a.node-link { text-decoration: none; }
     </style>
-</head>
-<body>
+<?php
+?>
 
 <a href="admin_panel.php" class="back-to-dashboard-btn">
     <i class="fas fa-arrow-left"></i> بازگشت به داشبورد
