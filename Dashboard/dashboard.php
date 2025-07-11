@@ -93,6 +93,7 @@ if ($is_staff) {
     <title>داشبورد | SSO Center</title>
     <link rel="stylesheet" href="../assets/css/dashboard_premium.css">
     <link rel="stylesheet" href="/assets/fonts/Vazirmatn-font-face.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
 <?php
 
