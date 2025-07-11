@@ -29,7 +29,7 @@ function install_panel {
     if ! dpkg -s "php8.3-fpm" &>/dev/null; then
         add-apt-repository ppa:ondrej/php -y >/dev/null 2>&1
         apt-get update -qq
-        apt-get install -y php8.3-fpm php8.3-mysql php8.3-mysqli php8.3-gd php8.3-mbstring php8.3-xml
+        apt-get install -y php8.3-fpm php8.3-mysql php8.3-mysqli php8.3-gd php8.3-mbstring php8.3-xml php8.3-curl
     fi
     print_success "PHP 8.3 and extensions are ready."
     if ! command -v composer &> /dev/null; then
