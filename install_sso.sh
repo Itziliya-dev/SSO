@@ -132,6 +132,54 @@ function uninstall_panel {
 }
 
 # ==============================================================================
+#                             UPDATE LOGIC (NEW)
+# ==============================================================================
+function update_panel {
+    print_warning "Starting SSO Panel Update..."
+    PANEL_DIR="/var/www/sso-system"
+    if [ ! -d "$PANEL_DIR" ]; then
+        print_error "SSO Panel directory not found. Cannot update."
+    fi
+
+    print_warning "Moving to project directory..."
+    cd "$PANEL_DIR" || exit
+
+    print_warning "Fetching latest versions from GitHub..."
+    git fetch --all --tags --prune
+    if [ $? -ne 0 ]; then print_error "Failed to fetch from GitHub."; fi
+
+    LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+    if [ -z "$LATEST_TAG" ]; then
+        print_error "Could not determine the latest version tag. Make sure you have created a release on GitHub."
+    fi
+    print_success "Latest official version found: $LATEST_TAG"
+
+    read -p "$(echo -e "${YELLOW}This will update the panel to version $LATEST_TAG. Are you sure? [y/N]: ${NC}")" CONFIRM
+    if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then print_error "Update cancelled."; fi
+
+    print_warning "Updating panel to version $LATEST_TAG..."
+    git checkout "$LATEST_TAG"
+    if [ $? -ne 0 ]; then print_error "Failed to checkout the new version."; fi
+
+    print_warning "Updating dependencies with Composer..."
+    composer install --no-dev --optimize-autoloader
+    if [ $? -ne 0 ]; then print_error "Composer failed to update dependencies."; fi
+
+    print_warning "Setting correct file permissions..."
+    chown -R www-data:www-data "$PANEL_DIR"
+
+    print_warning "Restarting PHP-FPM service..."
+    systemctl restart php8.3-fpm
+    if [ $? -ne 0 ]; then print_warning "Could not restart PHP-FPM, you may need to do it manually."; fi
+
+    echo
+    print_success "🎉 Panel successfully updated to version $LATEST_TAG! 🎉"
+    print_warning "Note: If this update requires database changes, you must apply them manually."
+}
+
+
+
+# ==============================================================================
 #                             SSL CERTIFICATE LOGIC
 # ==============================================================================
 function get_real_ssl {
@@ -226,17 +274,19 @@ echo "SSO Panel Management Script"
 echo "---------------------------"
 echo "  1) Install SSO Panel"
 echo "  2) Uninstall SSO Panel"
-echo "  3) Obtain/Renew SSL Certificate"
-echo "  4) Import Data Only from SQL Backup"
-echo "  5) Export Database Data Only"
+echo "  3) Update Panel to Latest Version"
+echo "  4) Obtain/Renew SSL Certificate"
+echo "  5) Import Data Only from SQL Backup"
+echo "  6) Export Database Data Only"
 echo
-read -p "Enter your choice [1-5]: " choice
+read -p "Enter your choice [1-6]: " choice
 case $choice in
     1) install_panel;;
     2) uninstall_panel;;
-    3) get_real_ssl;;
-    4) import_data_only;;
-    5) export_data_only;;
+    3) update_panel;;
+    4) get_real_ssl;;
+    5) import_data_only;;
+    6) export_data_only;;
     *) print_error "Invalid choice. Exiting.";;
 esac
 
