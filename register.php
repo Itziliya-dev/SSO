@@ -10,6 +10,7 @@ $tracking_code = isset($_GET['tracking_code']) ? $_GET['tracking_code'] : '';
 ?>
     <title>ثبت نام | SSO Center</title>
     <link rel="stylesheet" href="assets/css/login_modern.css">
+    <link rel="stylesheet" href="/assets/fonts/Vazirmatn-font-face.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <?php
 ?>
