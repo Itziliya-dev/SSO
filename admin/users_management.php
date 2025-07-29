@@ -1,22 +1,22 @@
 <?php
 require_once __DIR__.'/../includes/config.php';
 require_once __DIR__.'/../includes/auth_functions.php';
-require_once __DIR__.'/../includes/header.php';
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
-// --- بخش API: پردازش درخواست‌های AJAX (بدون تغییر) ---
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
-    if (!isset($_SESSION['is_owner']) || !$_SESSION['is_owner']) {
-        echo json_encode(['success' => false, 'message' => 'دسترسی غیر مجاز']);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    // اگر کاربر به این بخش دسترسی ندارد، درخواست را رد کن
+    if (empty($_SESSION['permissions']['is_owner']) || empty($_SESSION['permissions']['can_manage_users'])) {
+        echo json_encode(['success' => false, 'message' => 'دسترسی غیرمجاز']);
         exit();
     }
 
     $conn = getDbConnection();
-    $action = $_POST['action'];
+    $action = $_POST['action']; // حالا این خط امن است
     $userId = isset($_POST['user_id']) ? (int)$_POST['user_id'] : 0;
     header('Content-Type: application/json');
 
+    // تمام منطق switch شما بدون تغییر در اینجا قرار می‌گیرد
     switch ($action) {
         case 'get_user_details':
             if ($userId > 0) {
@@ -71,14 +71,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
             }
             break;
     }
-    exit();
+    
+    $conn->close();
+    exit(); // مهم: بعد از پردازش API، اجرای اسکریپت متوقف می‌شود
 }
+require_once __DIR__.'/../includes/header.php';
 
-// --- بخش نمایش صفحه ---
-if (!isset($_SESSION['is_owner']) || !$_SESSION['is_owner']) {
-    header('Location: /../login.php');
-    exit();
-}
 $conn = getDbConnection();
 
 // منطق فیلتر و جستجو (بدون تغییر)

@@ -3,10 +3,10 @@ require_once __DIR__.'/../includes/config.php';
 require_once __DIR__.'/../includes/auth_functions.php';
 require_once __DIR__.'/../includes/header.php';
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
-if (!isset($_SESSION['is_owner']) || !$_SESSION['is_owner']) {
-    header('Location: login.php');
+if (empty($_SESSION['permissions']['is_owner']) || empty($_SESSION['permissions']['can_manage_requests'])) {
+    header('Location: /Dashboard/dashboard.php');
     exit();
 }
 
@@ -160,7 +160,7 @@ $pending_requests_count = $conn->query("SELECT COUNT(id) as count FROM `registra
                                 </td>
                                 <td>
                                     <button class="action-btn view-request" data-id="<?= $request['id'] ?>" title="مشاهده جزئیات"><i class="fas fa-eye"></i></button>
-                                    <button class="action-btn approve-request" data-id="<?= $request['id'] ?>" title="تایید درخواست"><i class="fas fa-check"></i></button>
+                                    <button class="action-btn approve-request" data-id="<?= $request['id'] ?>" title="تایید یوزر"><i class="fas fa-check"></i></button>
                                     <button class="action-btn staff-request" data-id="<?= $request['id'] ?>" title="تایید استف"><i class="fas fa-user-plus"></i></button>
                                     <button class="action-btn reject-request" data-id="<?= $request['id'] ?>" title="رد درخواست"><i class="fas fa-times"></i></button>
                                 </td>

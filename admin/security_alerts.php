@@ -8,10 +8,10 @@ require_once __DIR__.'/../includes/auth_functions.php';
 require_once __DIR__.'/../includes/header.php';
 
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
-if (!isset($_SESSION['is_owner']) || !$_SESSION['is_owner']) {
-    header('Location: login.php');
+if (empty($_SESSION['permissions']['is_owner']) || empty($_SESSION['permissions']['can_view_alerts'])) {
+    header('Location: /Dashboard/dashboard.php');
     exit();
 }
 

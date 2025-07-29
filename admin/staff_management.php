@@ -2,8 +2,12 @@
 require_once __DIR__.'/../includes/config.php';
 require_once __DIR__.'/../includes/auth_functions.php';
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
+if (empty($_SESSION['permissions']['is_owner']) || empty($_SESSION['permissions']['can_manage_staff'])) {
+    header('Location: /Dashboard/dashboard.php');
+    exit();
+}
 // --- بخش API: پردازش تمام درخواست‌های AJAX ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
     if (!isset($_SESSION['is_owner']) || !$_SESSION['is_owner']) {
@@ -177,12 +181,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
     exit();
 }
 
-require_once __DIR__.'/../includes/header.php'; 
 // --- بخش نمایش صفحه ---
-if (!isset($_SESSION['is_owner']) || !$_SESSION['is_owner']) {
-    header('Location: login.php');
-    exit();
-}
+
+
+require_once __DIR__.'/../includes/header.php'; 
+
 
 $currentPage = 'staff_management'; // ۱. تعریف صفحه فعلی برای فعال شدن لینک صحیح در سایدبار
 $conn = getDbConnection();
