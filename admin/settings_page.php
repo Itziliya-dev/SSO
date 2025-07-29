@@ -1,14 +1,15 @@
 <?php
+define('APP_START_TIME', microtime(true));
 // ----------- بخش منطق PHP (نسخه کامل و جدید) -----------
 require_once __DIR__.'/../includes/config.php';
 require_once __DIR__.'/../includes/auth_functions.php';
 require_once __DIR__.'/../includes/database.php';
 require_once __DIR__.'/../includes/header.php';
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
-if (!isset($_SESSION['is_owner']) || !$_SESSION['is_owner']) {
-    header('Location: login.php');
+if (empty($_SESSION['permissions']['is_owner']) || empty($_SESSION['permissions']['can_manage_settings'])) {
+    header('Location: /Dashboard/dashboard.php');
     exit();
 }
 
@@ -178,6 +179,108 @@ if (strpos(strtolower(php_uname('s')), 'linux') !== false) {
 $dev_info['db_server_version'] = $conn->server_info;
 $dev_info['db_connection_charset'] = $conn->character_set_name();
 
+// ==========================================================
+//               بخش جدید: جمع‌آوری اطلاعات سلامت سایت
+// ==========================================================
+function get_server_load() {
+    if (function_exists('sys_getloadavg')) {
+        $load = sys_getloadavg();
+        return round($load[0], 2);
+    }
+    return 'N/A';
+}
+
+function get_disk_usage() {
+    $total_space = disk_total_space(__DIR__);
+    $free_space = disk_free_space(__DIR__);
+    $used_space = $total_space - $free_space;
+    $used_percent = round(($used_space / $total_space) * 100, 2);
+    return [
+        'total' => round($total_space / (1024**3), 2) . ' GB',
+        'used_percent' => $used_percent,
+    ];
+}
+
+$site_health = [];
+
+// ۱. بررسی اتصال به دیتابیس
+try {
+    getDbConnection();
+    $site_health['database'] = ['status' => 'good', 'message' => 'اتصال برقرار است'];
+} catch (Exception $e) {
+    $site_health['database'] = ['status' => 'error', 'message' => 'اتصال برقرار نیست!'];
+}
+
+// ۲. بررسی نسخه PHP
+if (version_compare(phpversion(), '8.3', '>=')) {
+    $site_health['php_version'] = ['status' => 'good', 'message' => 'نسخه ' . phpversion()];
+} else {
+    $site_health['php_version'] = ['status' => 'warning', 'message' => 'نسخه PHP پایین است (' . phpversion() . ')'];
+}
+
+// ۳. بررسی لود سرور (فقط برای لینوکس)
+$load = get_server_load();
+if ($load !== 'N/A') {
+    if ($load > 2) {
+        $site_health['server_load'] = ['status' => 'warning', 'message' => "لود بالا است ({$load})"];
+    } else {
+        $site_health['server_load'] = ['status' => 'good', 'message' => "لود نرمال است ({$load})"];
+    }
+}
+
+// ۴. بررسی فضای دیسک
+$disk = get_disk_usage();
+if ($disk['used_percent'] > 85) {
+    $site_health['disk_usage'] = ['status' => 'error', 'message' => "فضا رو به اتمام است ({$disk['used_percent']}%)"];
+} else {
+    $site_health['disk_usage'] = ['status' => 'good', 'message' => "{$disk['used_percent']}% از {$disk['total']} استفاده شده"];
+}
+
+// ۵. بررسی فعال بودن حالت دیباگ (برای امنیت)
+// شما باید ثابت خود را برای دیباگ در اینجا قرار دهید
+if (defined('APP_DEBUG') && APP_DEBUG) { 
+    $site_health['debug_mode'] = ['status' => 'warning', 'message' => 'حالت دیباگ فعال است'];
+} else {
+    $site_health['debug_mode'] = ['status' => 'good', 'message' => 'حالت دیباگ غیرفعال است'];
+}
+// ... (کدهای قبلی برای بررسی فضای دیسک و حالت دیباگ) ...
+
+// ۶. محاسبه سرعت اتصال به دیتابیس
+$db_start_time = microtime(true);
+getDbConnection(); // فقط برای تست اتصال
+$db_connection_time = round((microtime(true) - $db_start_time) * 1000); // به میلی‌ثانیه
+
+if ($db_connection_time > 200) { // اگر بیشتر از 200 میلی‌ثانیه طول بکشد
+    $site_health['db_speed'] = ['status' => 'warning', 'message' => "کند است ({$db_connection_time}ms)"];
+} else {
+    $site_health['db_speed'] = ['status' => 'good', 'message' => "سریع است ({$db_connection_time}ms)"];
+}
+
+// ۷. محاسبه سرعت لود صفحه (Server-Side)
+$page_load_time = round((microtime(true) - APP_START_TIME) * 1000); // به میلی‌ثانیه
+
+if ($page_load_time > 1000) { // اگر بیشتر از 1 ثانیه طول بکشد
+    $site_health['page_load'] = ['status' => 'warning', 'message' => "کند است ({$page_load_time}ms)"];
+} else {
+    $site_health['page_load'] = ['status' => 'good', 'message' => "سریع است ({$page_load_time}ms)"];
+}
+$dev_info['composer_packages'] = [];
+$installed_json_path = dirname(__DIR__) . '/vendor/composer/installed.json';
+
+if (file_exists($installed_json_path)) {
+    $installed_data = json_decode(file_get_contents($installed_json_path), true);
+    // در نسخه‌های جدید Composer، پکیج‌ها داخل کلید 'packages' هستند
+    $packages = $installed_data['packages'] ?? $installed_data;
+    
+    foreach ($packages as $package) {
+        $dev_info['composer_packages'][] = [
+            'name'        => $package['name'] ?? 'N/A',
+            'version'     => $package['version'] ?? 'N/A',
+            'description' => $package['description'] ?? 'No description provided.'
+        ];
+    }
+}
+
 // تشخیص نوع دیتابیس (MySQL یا MariaDB)
 if (strpos(strtolower($dev_info['db_server_version']), 'mariadb') !== false) {
     $dev_info['db_type'] = 'MariaDB';
@@ -250,162 +353,261 @@ $pending_requests_count = $conn->query("SELECT COUNT(id) as count FROM `registra
                         </label>
                     </div>
 
-                    <hr style="margin: 25px 0;">
+<hr style="margin: 30px 0;">
 
-                    <h3>آپلود تصاویر</h3>
-                    <small class="form-hint" style="margin-bottom: 20px; display: block; text-align: right;">
-             بعد از انتخاب عکس و کلیک روی دکمه ذخیره، نوار وضعیت آپلود نمایش داده می‌شود. لطفاً تا رفرش خودکار صفحه صبر کنید.
-                    </small>
-                    <div class="form-group">
-                        <label for="background_image">تغییر عکس پس‌زمینه (Background):</label>
-                        <input type="file" id="background_image" name="background_image" class="form-control" accept="image/*">
-                        <small class="form-hint">فایل جدید با نام `background` ذخیره شده و جایگزین فایل قبلی می‌شود.</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="logo_image">تغییر لوگو (Logo):</label>
-                        <input type="file" id="logo_image" name="logo_image" class="form-control" accept="image/*">
-                        <small class="form-hint">فایل جدید با نام `logo` ذخیره شده و جایگزین فایل قبلی می‌شود.</small>
-                    </div>
-                    <div class="progress-container" style="display: none;">
-                        <div class="progress-bar"></div>
-                    </div>
-                    <button type="submit" class="submit-btn"><i class="fas fa-save"></i> ذخیره تنظیمات این تب</button>
+<h3><i class="fas fa-image"></i> آپلود تصاویر</h3>
+<div class="upload-section">
+    <div class="file-upload-wrapper">
+        <label>عکس پس‌زمینه صفحه لاگین</label>
+        <div class="image-preview" style="background-image: url('../assets/images/background.jpg?v=<?= time() ?>');"></div>
+        <div class="file-input-container">
+            <input type="file" id="background_image" name="background_image" class="custom-file-input" accept="image/*">
+            <label for="background_image" class="file-input-label">
+                <i class="fas fa-upload"></i>
+                <span>انتخاب فایل جدید...</span>
+            </label>
+            <span class="file-name-display">هیچ فایلی انتخاب نشده</span>
+        </div>
+        <small class="form-hint">فایل جدید با نام `background.jpg` ذخیره می‌شود.</small>
+    </div>
+
+    <div class="file-upload-wrapper">
+        <label>لوگوی صفحه لاگین</label>
+        <div class="image-preview" style="background-image: url('../assets/images/logo.png?v=<?= time() ?>'); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>
+        <div class="file-input-container">
+            <input type="file" id="logo_image" name="logo_image" class="custom-file-input" accept="image/*">
+            <label for="logo_image" class="file-input-label">
+                <i class="fas fa-upload"></i>
+                <span>انتخاب فایل جدید...</span>
+            </label>
+            <span class="file-name-display">هیچ فایلی انتخاب نشده</span>
+        </div>
+        <small class="form-hint">فایل جدید با نام `logo.png` ذخیره می‌شود.</small>
+    </div>
+</div>
+
+<div class="progress-container" style="display: none;">
+    <div class="progress-bar"></div>
+</div>
+<button type="submit" class="submit-btn"><i class="fas fa-save"></i> ذخیره تنظیمات این تب</button>
                 </form>
             </div>
 
-            <div id="config" class="tab-content <?= $active_tab === 'config' ? 'active' : '' ?>">
-                <form method="POST">
-                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
-                    <input type="hidden" name="form_type" value="config">
-                    <h3>پیکربندی اصلی برنامه</h3>
-                    
-                    <div class="form-group">
-                        <label>آدرس پایه (BASE_URL):</label>
-                        <input type="text" name="app_base_url" class="form-control" value="<?= htmlspecialchars($settings['app_base_url'] ?? '') ?>">
-                    </div>
-                    <div class="form-group">
-                        <label>آدرس پنل (PANEL_URL):</label>
-                        <input type="text" name="app_panel_url" class="form-control" value="<?= htmlspecialchars($settings['app_panel_url'] ?? '') ?>">
-                    </div>
-                    <div class="form-group">
-                        <label>آدرس پنل ادمین (ADMIN_PANEL_URL):</label>
-                        <input type="text" name="app_admin_panel_url" class="form-control" value="<?= htmlspecialchars($settings['app_admin_panel_url'] ?? '') ?>">
-                    </div>
-                    <div class="form-group">
-                        <label>مسیر توکن‌ها (TOKEN_DIR):</label>
-                        <input type="text" name="app_token_dir" class="form-control" value="<?= htmlspecialchars($settings['app_token_dir'] ?? '') ?>">
-                    </div>
-                    
-                    <hr style="margin: 25px 0;">
-                    
-                    <h4>تنظیمات Pterodactyl</h4>
-                    <div class="form-group">
-                        <label>آدرس پنل Pterodactyl:</label>
-                        <input type="text" name="pterodactyl_url" class="form-control" value="<?= htmlspecialchars($settings['pterodactyl_url'] ?? '') ?>">
-                    </div>
-                    <div class="form-group">
-                        <label>کلید API کلاینت:</label>
-                        <input type="password" name="pterodactyl_api_key_client" class="form-control" value="<?= htmlspecialchars($settings['pterodactyl_api_key_client'] ?? '') ?>">
-                    </div>
-                    <div class="form-group">
-                        <label>کلید API اپلیکیشن:</label>
-                        <input type="password" name="pterodactyl_api_key_application" class="form-control" value="<?= htmlspecialchars($settings['pterodactyl_api_key_application'] ?? '') ?>">
-                    </div>
-                    <div class="form-group">
-                        <label>آیدی سرور:</label>
-                        <input type="text" name="pterodactyl_server_id" class="form-control" value="<?= htmlspecialchars($settings['pterodactyl_server_id'] ?? '') ?>">
-                    </div>
-                    
-                    <button type="submit" class="submit-btn"><i class="fas fa-save"></i> ذخیره پیکربندی</button>
-                </form>
+<div id="config" class="tab-content <?= $active_tab === 'config' ? 'active' : '' ?>">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
+        <input type="hidden" name="form_type" value="config">
+        
+        <div class="dev-info-grid">
+            <div class="info-block full-width">
+                <h4 class="info-block-title"><i class="fas fa-link"></i> آدرس‌های برنامه (URLs)</h4>
+                
+                <div class="form-group">
+                    <label for="app_base_url">آدرس پایه (BASE_URL):</label>
+                    <input type="text" id="app_base_url" name="app_base_url" class="form-control" value="<?= htmlspecialchars($settings['app_base_url'] ?? '') ?>">
+                    <small class="form-hint">آدرس اصلی که پنل روی آن نصب شده است.</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="app_panel_url">آدرس پنل کاربری (PANEL_URL):</label>
+                    <input type="text" id="app_panel_url" name="app_panel_url" class="form-control" value="<?= htmlspecialchars($settings['app_panel_url'] ?? '') ?>">
+                    <small class="form-hint">آدرس کامل صفحه داشبورد کاربران.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="app_admin_panel_url">آدرس پنل ادمین (ADMIN_PANEL_URL):</label>
+                    <input type="text" id="app_admin_panel_url" name="app_admin_panel_url" class="form-control" value="<?= htmlspecialchars($settings['app_admin_panel_url'] ?? '') ?>">
+                </div>
             </div>
+
+            <div class="info-block full-width">
+                <h4 class="info-block-title"><i class="fas fa-server"></i> اتصال به Pterodactyl</h4>
+                
+                <div class="form-group">
+                    <label for="pterodactyl_url">آدرس پنل Pterodactyl:</label>
+                    <input type="text" id="pterodactyl_url" name="pterodactyl_url" class="form-control" value="<?= htmlspecialchars($settings['pterodactyl_url'] ?? '') ?>" placeholder="e.g., https://panel.yourdomain.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="pterodactyl_api_key_client">کلید API کلاینت:</label>
+                    <input type="password" id="pterodactyl_api_key_client" name="pterodactyl_api_key_client" class="form-control" value="<?= htmlspecialchars($settings['pterodactyl_api_key_client'] ?? '') ?>">
+                </div>
+
+                <div class="form-group">
+                    <label for="pterodactyl_api_key_application">کلید API اپلیکیشن:</label>
+                    <input type="password" id="pterodactyl_api_key_application" name="pterodactyl_api_key_application" class="form-control" value="<?= htmlspecialchars($settings['pterodactyl_api_key_application'] ?? '') ?>">
+                </div>
+
+                <div class="form-group">
+                    <label for="pterodactyl_server_id">آیدی سرور:</label>
+                    <input type="text" id="pterodactyl_server_id" name="pterodactyl_server_id" class="form-control" value="<?= htmlspecialchars($settings['pterodactyl_server_id'] ?? '') ?>">
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="submit-btn" style="margin-top: 25px;"><i class="fas fa-save"></i> ذخیره پیکربندی</button>
+    </form>
+</div>
 
             <div id="developer" class="tab-content <?= $active_tab === 'developer' ? 'active' : '' ?>">
-                <div class="notification warning" style="opacity:1; transform:none;">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span><strong>نکته امنیتی:</strong> این اطلاعات حساس است و نباید با دیگران به اشتراک گذاشته شود.</span>
-                </div>
-
-                <div class="info-row">
-                    <label>اطلاعات سیستم عامل (OS):</label>
-                    <div class="info-value code-font"><?= htmlspecialchars($dev_info['os_info']) ?></div>
-                </div>
-
-                <div class="info-row">
-                    <label>اطلاعات وب سرور:</label>
-                    <div class="info-value code-font"><?= htmlspecialchars($dev_info['server_software']) ?></div>
-                    <small class="form-hint" style="text-align: right;">نوع شناسایی شده: <strong><?= htmlspecialchars($dev_info['web_server_type']) ?></strong></small>
-                </div>
-
-                <div class="info-row">
-                    <label>نسخه PHP:</label>
-                    <div class="info-value code-font"><?= htmlspecialchars($dev_info['php_version']) ?></div>
-                </div>
-
-                <div class="info-row">
-                    <label>ریشه پروژه (Project Root):</label>
-                    <div class="info-value code-font"><?= htmlspecialchars($dev_info['project_root']) ?></div>
-                </div>
-
-                <div class="info-row">
-                    <label>دایرکتوری استاندارد فایل کانفیگ وب سرور:</label>
-                    <div class="info-value">
-                        <ul>
-                            <?php if (!empty($dev_info['config_hints'])): ?>
-                                <?php foreach ($dev_info['config_hints'] as $hint): ?>
-                                    <li class="code-font"><?= htmlspecialchars($hint) ?></li>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <li>تشخیص خودکار برای این سیستم عامل پشتیبانی نمی‌شود.</li>
-                            <?php endif; ?>
-                        </ul>
-                        <small class="form-hint">این دایرکتوری استاندارد جهانی است ممکن است فایل کانفیگ در دایرکتوری جدا قرار داشته باشد.</small>
-                    </div>
-                    <hr style="margin: 25px 0;">
-                    <h4><i class="fas fa-database"></i> اطلاعات دیتابیس</h4>
-
-                    <div class="info-row">
-                        <label>نوع دیتابیس:</label>
-                        <div class="info-value">
-                            <?= htmlspecialchars($dev_info['db_type']) ?>
+                <div class="dev-info-grid">
+                    <div class="info-block">
+                        <h4 class="info-block-title"><i class="fas fa-server"></i> Server Environment</h4>
+                        <div class="info-row">
+                            <label>Operating System:</label>
+                            <div class="info-value code-font"><?= htmlspecialchars($dev_info['os_info']) ?></div>
+                        </div>
+                        <div class="info-row">
+                            <label>Web Server:</label>
+                            <div class="info-value code-font"><?= htmlspecialchars($dev_info['server_software']) ?></div>
+                        </div>
+                        <div class="info-row">
+                            <label>PHP Version:</label>
+                            <div class="info-value code-font"><?= htmlspecialchars($dev_info['php_version']) ?></div>
                         </div>
                     </div>
 
-                    <div class="info-row">
-                        <label>نسخه سرور دیتابیس:</label>
-                        <div class="info-value code-font">
-                            <?= htmlspecialchars($dev_info['db_server_version']) ?>
+                    <div class="info-block">
+                        <h4 class="info-block-title"><i class="fas fa-database"></i> Database</h4>
+                        <div class="info-row">
+                            <label>DB Type:</label>
+                            <div class="info-value"><?= htmlspecialchars($dev_info['db_type']) ?></div>
+                        </div>
+                        <div class="info-row">
+                            <label>DB Version:</label>
+                            <div class="info-value code-font"><?= htmlspecialchars($dev_info['db_server_version']) ?></div>
+                        </div>
+                        <div class="info-row">
+                            <label>Connection Charset:</label>
+                            <div class="info-value code-font"><?= htmlspecialchars($dev_info['db_connection_charset']) ?></div>
                         </div>
                     </div>
+                    <div class="info-block full-width">
+    <h4 class="info-block-title"><i class="fas fa-heartbeat"></i> وضعیت سلامت پنل</h4>
+    <div class="health-status-grid">
+        
+        <div class="health-item">
+            <div class="health-item-header">
+                <i class="fas fa-database status-icon-<?= $site_health['database']['status'] ?>"></i>
+                <span>اتصال دیتابیس</span>
+            </div>
+            <span class="health-item-message"><?= $site_health['database']['message'] ?></span>
+        </div>
 
-                    <div class="info-row">
-                        <label>کدبندی کاراکتر اتصال (Charset):</label>
-                        <div class="info-value code-font">
-                            <?= htmlspecialchars($dev_info['db_connection_charset']) ?>
+        <div class="health-item">
+            <div class="health-item-header">
+                <i class="fab fa-php status-icon-<?= $site_health['php_version']['status'] ?>"></i>
+                <span>نسخه PHP</span>
+            </div>
+            <span class="health-item-message"><?= $site_health['php_version']['message'] ?></span>
+        </div>
+
+        <?php if (isset($site_health['server_load'])): ?>
+        <div class="health-item">
+            <div class="health-item-header">
+                <i class="fas fa-tachometer-alt status-icon-<?= $site_health['server_load']['status'] ?>"></i>
+                <span>لود سرور</span>
+            </div>
+            <span class="health-item-message"><?= $site_health['server_load']['message'] ?></span>
+        </div>
+        <?php endif; ?>
+
+        <div class="health-item">
+            <div class="health-item-header">
+                <i class="fas fa-hdd status-icon-<?= $site_health['disk_usage']['status'] ?>"></i>
+                <span>فضای دیسک</span>
+            </div>
+            <span class="health-item-message"><?= $site_health['disk_usage']['message'] ?></span>
+        </div>
+
+        <div class="health-item">
+            <div class="health-item-header">
+                <i class="fas fa-bug status-icon-<?= $site_health['debug_mode']['status'] ?>"></i>
+                <span>حالت دیباگ</span>
+            </div>
+            <span class="health-item-message"><?= $site_health['debug_mode']['message'] ?></span>
+        </div>
+        <div class="health-item">
+            <div class="health-item-header">
+                <i class="fas fa-bolt status-icon-<?= $site_health['db_speed']['status'] ?>"></i>
+                <span>سرعت دیتابیس</span>
+            </div>
+            <span class="health-item-message"><?= $site_health['db_speed']['message'] ?></span>
+        </div>
+
+        <div class="health-item">
+            <div class="health-item-header">
+                <i class="fas fa-rocket status-icon-<?= $site_health['page_load']['status'] ?>"></i>
+                <span>سرعت لود پنل</span>
+            </div>
+            <span class="health-item-message"><?= $site_health['page_load']['message'] ?></span>
+        </div>
+
+    </div>
+</div>
+<div class="info-block full-width">
+            <h4 class="info-block-title"><i class="fab fa-php"></i> Composer Packages</h4>
+            <div class="table-container" style="max-height: 400px;">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left;">Package Name</th>
+                            <th style="text-align: center;">Version</th>
+                            <th style="text-align: left;">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (!empty($dev_info['composer_packages'])): ?>
+                            <?php foreach ($dev_info['composer_packages'] as $package): ?>
+                                <tr>
+                                    <td class="code-font" style="text-align: left;"><?= htmlspecialchars($package['name']) ?></td>
+                                    <td style="text-align: center;"><span class="permission-badge owner-access"><?= htmlspecialchars($package['version']) ?></span></td>
+                                    <td style="text-align: left; white-space: normal; line-height: 1.4;"><?= htmlspecialchars($package['description']) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr><td colspan="3" style="text-align: center;">اطلاعات پکیج‌های Composer یافت نشد.</td></tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+                    <div class="info-block full-width">
+                        <h4 class="info-block-title"><i class="fas fa-folder"></i> Project & Config Paths</h4>
+                        <div class="info-row">
+                            <label>Project Root:</label>
+                            <div class="info-value code-font"><?= htmlspecialchars($dev_info['project_root']) ?></div>
+                        </div>
+                        <div class="info-row">
+                            <label>Standard Web Server Config Dirs:</label>
+                            <div class="info-value">
+                                <ul>
+                                    <?php if (!empty($dev_info['config_hints'])): ?>
+                                        <?php foreach ($dev_info['config_hints'] as $hint): ?>
+                                            <li class="code-font"><?= htmlspecialchars($hint) ?></li>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <li>Not detected for this OS.</li>
+                                    <?php endif; ?>
+                                </ul>
+                            </div>
                         </div>
                     </div>
-                    <hr style="margin: 25px 0;">
-                    <h4><i class="fas fa-info-circle"></i> اطلاعات توسعه دهنده</h4>
-
-                    <div class="info-row">
-                        <label>توسعه‌دهنده:</label>
-                        <div class="info-value">
-                            Itz_iliya32
+                    
+                    <div class="info-block full-width">
+                        <h4 class="info-block-title"><i class="fas fa-info-circle"></i> Developer Info</h4>
+                        <div class="info-row">
+                            <label>Developer:</label>
+                            <div class="info-value">Itz_iliya32</div>
                         </div>
-                    </div>
-
-                    <div class="info-row">
-                        <label>آیدی تلگرام:</label>
-                        <div class="info-value">
-                            <a href="https://t.me/Itz_iliya32" target="_blank" rel="noopener noreferrer">@Itz_iliya32</a>
+                        <div class="info-row">
+                            <label>Telegram ID:</label>
+                            <div class="info-value"><a href="https://t.me/Itz_iliya32" target="_blank">@Itz_iliya32</a></div>
                         </div>
-                    </div>
-
-                    <div class="info-row">
-                        <label>مخزن گیت‌هاب پروژه:</label>
-                        <div class="info-value code-font">
-                            <a href="https://github.com/ItzEliya234/SSO" target="_blank" rel="noopener noreferrer">https://github.com/ItzEliya234/SSO</a>
+                        <div class="info-row">
+                            <label>GitHub Repository:</label>
+                            <div class="info-value code-font"><a href="https://github.com/ItzEliya234/SSO" target="_blank">https://github.com/ItzEliya234/SSO</a></div>
                         </div>
                     </div>
                 </div>
@@ -438,6 +640,20 @@ document.addEventListener("DOMContentLoaded", function() {
         // در غیر این صورت، اولین تب را به عنوان پیش‌فرض باز کن
         document.querySelector('.tab-link').click();
     }
+    const fileInputs = document.querySelectorAll('.custom-file-input');
+    fileInputs.forEach(function(input) {
+        input.addEventListener('change', function(e) {
+            const fileName = e.target.files.length > 0 ? e.target.files[0].name : 'هیچ فایلی انتخاب نشده';
+            // پیدا کردن نزدیک‌ترین والد که شامل span نمایش نام است
+            const container = this.closest('.file-input-container');
+            if (container) {
+                const displaySpan = container.querySelector('.file-name-display');
+                if (displaySpan) {
+                    displaySpan.textContent = fileName;
+                }
+            }
+        });
+    });
 });
 </script>
 <script>
