@@ -1,29 +1,29 @@
 <?php
-// این دو خط باید در بالاترین نقطه فایل باشند
+// ۱. شروع پردازش‌های سمت سرور
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+require __DIR__.'/../vendor/autoload.php'; 
+
 require_once __DIR__.'/../includes/config.php';
-require_once __DIR__.'/../includes/database.php'; // <--- این خط را اضافه کنید اگر تابع در این فایل است
-require_once __DIR__.'/../includes/header.php';
-
-
-// require_once __DIR__.'/../includes/auth_functions.php'; // برای getDbConnection، اگر در config.php نیست
-// getDbConnection باید در config.php یا database.php (که توسط config.php لود می‌شود) موجود باشد.
+require_once __DIR__.'/../includes/database.php';
 
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: /../login.php'); // اطمینان از مسیر صحیح
+    header('Location: /../login.php');
     exit();
 }
 
 $current_id_in_session = $_SESSION['user_id'];
+$username = $_SESSION['username'] ?? 'کاربر';
 $user_type = $_SESSION['user_type'] ?? 'user';
+$is_staff = ($user_type === 'staff');
 
-$conn = getDbConnection(); // تابع اتصال به دیتابیس شما
+$conn = getDbConnection();
 if (!$conn || $conn->connect_error) {
-    error_log("Profile Page - DB Connection Error: " . ($conn ? $conn->connect_error : 'Failed to connect object'));
     die("خطا در اتصال به دیتابیس.");
 }
 
@@ -31,464 +31,455 @@ $message = '';
 $message_type = '';
 $profile_data = null;
 
-// 1. دریافت اطلاعات فعلی کاربر برای نمایش در فرم
-if ($user_type === 'staff') {
-    // کاربر استف است، از staff-manage بخوان (discord_id2 و permissions هم باید باشند)
-    $sql_fetch = "SELECT id, username, fullname, email, phone, age, discord_id, discord_id2, steam_id, permissions, is_verify, discord_conn
-                  FROM `staff-manage`
-                  WHERE id = ?"; // یا user_id = ? اگر current_id_in_session مربوط به جدول users است
-} else { // کاربر عادی است، فقط از users بخوان
-    $sql_fetch = "SELECT id, username, fullname, email, phone, is_owner, has_user_panel
-                  FROM `users`
-                  WHERE id = ?";
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'send_verification') {
+    $user_email = $_POST['email_to_verify'];
+    if (!filter_var($user_email, FILTER_VALIDATE_EMAIL)) {
+        $message = "فرمت ایمیل نامعتبر است.";
+        $message_type = 'error';
+    } else {
+        // ایجاد توکن و تاریخ انقضا
+        $token = bin2hex(random_bytes(32));
+        $expires_at = (new DateTime())->add(new DateInterval('PT1H'))->format('Y-m-d H:i:s'); // انقضا تا ۱ ساعت دیگر
+
+        // ذخیره توکن در دیتابیس
+        $table_to_update = $is_staff ? '`staff-manage`' : '`users`';
+        $stmt_token = $conn->prepare("UPDATE $table_to_update SET verification_token = ?, token_expires_at = ? WHERE id = ?");
+        $stmt_token->bind_param("ssi", $token, $expires_at, $current_id_in_session);
+        
+        if ($stmt_token->execute()) {
+            // تنظیمات ارسال ایمیل با PHPMailer
+            $mail = new PHPMailer(true);
+            try {
+                // اطلاعات SMTP شما
+                $mail->isSMTP();
+                $mail->Host       = 'smtp.c1.liara.email';
+                $mail->SMTPAuth   = true;
+                $mail->Username   = 'keen_panini_36oc86'; // یوزرنیم شما
+                $mail->Password   = '7fd84fc1-f26c-4d28-aafa-2f505b94915f'; // پسورد شما
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // یا 'ssl'
+                $mail->Port       = 587; // یا 465 برای SSL
+                $mail->CharSet    = 'UTF-8';
+
+                // فرستنده و گیرنده
+                $mail->setFrom('no-reply@itziliya-dev.ir', 'SSO Center'); // ایمیل فرستنده را با دامنه خود جایگزین کنید
+                $mail->addAddress($user_email, $username);
+
+                // قالب و محتوای ایمیل (قالب حرفه‌ای برای جلوگیری از اسپم)
+                $verification_link = "https://itziliya-dev.ir/auth/verify_email.php?token=" . $token; // آدرس دامنه خود را جایگزین کنید
+
+                $emailBody = file_get_contents('email_template.html'); // یک فایل قالب برای خوانایی بهتر
+                $emailBody = str_replace('{{username}}', htmlspecialchars($username), $emailBody);
+                $emailBody = str_replace('{{verification_link}}', $verification_link, $emailBody);
+
+                $mail->isHTML(true);
+                $mail->Subject = 'تایید حساب کاربری شما در SSO Center';
+                $mail->Body    = $emailBody;
+                $mail->AltBody = 'برای تایید حساب خود، لطفا لینک زیر را در مرورگر خود باز کنید: ' . $verification_link;
+
+                $mail->send();
+                $message = 'ایمیل تایید با موفقیت به ' . htmlspecialchars($user_email) . ' ارسال شد.';
+                $message_type = 'success';
+            } catch (Exception $e) {
+                $message = "خطا در ارسال ایمیل: {$mail->ErrorInfo}";
+                $message_type = 'error';
+            }
+        } else {
+            $message = "خطا در ذخیره توکن در دیتابیس.";
+            $message_type = 'error';
+        }
+    }
+}
+
+// ۲. واکشی اطلاعات فعلی کاربر/استف
+$sql_fetch = '';
+if ($is_staff) {
+    $sql_fetch = "SELECT id, username, password, fullname, email, phone, age, discord_id, discord_id2, steam_id, permissions, is_verify, discord_conn FROM `staff-manage` WHERE id = ?";
+} else {
+    $sql_fetch = "SELECT id, username, password, fullname, email, phone, is_owner, has_user_panel FROM `users` WHERE id = ?";
 }
 
 $stmt_fetch = $conn->prepare($sql_fetch);
-if ($stmt_fetch === false) {
-    error_log("Profile Fetch Prepare Error: " . $conn->error);
-    die("خطا در آماده سازی کوئری (خواندن اطلاعات اولیه): " . htmlspecialchars($conn->error));
+if ($stmt_fetch) {
+    $stmt_fetch->bind_param("i", $current_id_in_session);
+    $stmt_fetch->execute();
+    $result_fetch = $stmt_fetch->get_result();
+    $profile_data = $result_fetch->fetch_assoc();
+    $stmt_fetch->close();
 }
-// اگر current_id_in_session همیشه ID جدول مربوطه است (staff-manage.id یا users.id)
-$stmt_fetch->bind_param("i", $current_id_in_session);
-
-// اگر current_id_in_session همیشه user_id از جدول users است و برای staff باید staff-manage.user_id را مپ کنید:
-// if ($user_type === 'staff') {
-//     // $stmt_fetch->bind_param("i", $user_id_from_users_table_for_staff); // که باید این user_id را داشته باشید
-// } else {
-//    $stmt_fetch->bind_param("i", $current_id_in_session);
-// }
-
-
-if (!$stmt_fetch->execute()) {
-    error_log("Profile Fetch Execute Error: " . $stmt_fetch->error);
-    die("خطا در اجرای کوئری (خواندن اطلاعات اولیه): " . htmlspecialchars($stmt_fetch->error));
-}
-
-$result_fetch = $stmt_fetch->get_result();
-$profile_data = $result_fetch->fetch_assoc();
-$stmt_fetch->close();
 
 if (!$profile_data) {
-    // اگر از user_id برای staff استفاده می‌کنید، اینجا باید پیام مناسب‌تری باشد
-    die("خطا: اطلاعات کاربر با ID " . htmlspecialchars($current_id_in_session) . " و نوع " . htmlspecialchars($user_type) . " یافت نشد.");
+    die("خطا: اطلاعات کاربر یافت نشد.");
 }
 
-
-// 2. پردازش فرم آپدیت وقتی POST ارسال می‌شود
+// ۳. پردازش فرم آپدیت
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // اطمینان از اینکه اتصال هنوز برقرار است یا دوباره برقرار شود
-    if (!$conn || $conn->ping() === false) { // ping() برای بررسی زنده بودن اتصال
-        $conn = getDbConnection();
-        if (!$conn || $conn->connect_error) {
-            error_log("Profile Update - DB Re-Connection Error: " . ($conn ? $conn->connect_error : 'Failed to connect object'));
-            die("خطا در اتصال مجدد به دیتابیس برای آپدیت.");
+    $posted_fullname = $_POST['fullname'] ?? $profile_data['fullname'];
+    $posted_email = $_POST['email'] ?? $profile_data['email'];
+    $posted_phone = $_POST['phone'] ?? $profile_data['phone'];
+    $new_password = $_POST['new_password'] ?? '';
+    $confirm_password = $_POST['confirm_password'] ?? '';
+
+    $update_sql_parts = [];
+    $params_update = [];
+    $types_update = "";
+    $table_to_update = $is_staff ? '`staff-manage`' : '`users`';
+
+    // مقایسه و افزودن فیلدهای تغییر یافته
+    if ($posted_fullname !== $profile_data['fullname']) { $update_sql_parts[] = "fullname = ?"; $params_update[] = $posted_fullname; $types_update .= "s"; }
+    if ($posted_email !== $profile_data['email']) { $update_sql_parts[] = "email = ?"; $params_update[] = $posted_email; $types_update .= "s"; }
+    if ($posted_phone !== $profile_data['phone']) { $update_sql_parts[] = "phone = ?"; $params_update[] = $posted_phone; $types_update .= "s"; }
+
+    if ($is_staff) {
+        $posted_staff_age = $_POST['staff_age'] ?? $profile_data['age'];
+        $posted_staff_steam_id = $_POST['staff_steam_id'] ?? $profile_data['steam_id'];
+        if ($posted_staff_age != $profile_data['age']) { $update_sql_parts[] = "age = ?"; $params_update[] = $posted_staff_age; $types_update .= "i"; }
+        if ($posted_staff_steam_id != $profile_data['steam_id']) { $update_sql_parts[] = "steam_id = ?"; $params_update[] = $posted_staff_steam_id; $types_update .= "s"; }
+    }
+
+    // بررسی و آپدیت رمز عبور
+    if (!empty($new_password)) {
+        if ($new_password === $confirm_password) {
+            $hashed_password = password_hash($new_password, PASSWORD_BCRYPT);
+            $update_sql_parts[] = "password = ?";
+            $params_update[] = $hashed_password;
+            $types_update .= "s";
+        } else {
+            $message = "رمزهای عبور جدید مطابقت ندارند.";
+            $message_type = 'error';
         }
     }
 
-    $posted_fullname = $_POST['fullname'] ?? ($profile_data['fullname'] ?? null);
-    $posted_email = $_POST['email'] ?? ($profile_data['email'] ?? null);
-    $posted_phone = $_POST['phone'] ?? ($profile_data['phone'] ?? null);
-    $new_password = $_POST['new_password'] ?? null;
-    $confirm_password = $_POST['confirm_password'] ?? null;
-
-    // فیلدهای مخصوص استف (اگر کاربر استف است)
-    $posted_staff_age = ($user_type === 'staff') ? ($_POST['staff_age'] ?? ($profile_data['age'] ?? null)) : null;
-    // آیدی‌های دیسکورد و استیم معمولاً توسط کاربر اینجا تغییر داده نمی‌شوند، مگر اینکه بخواهید
-    // $posted_staff_discord_id = ($user_type === 'staff') ? ($_POST['staff_discord_id'] ?? ($profile_data['discord_id'] ?? null)) : null;
-    // $posted_staff_steam_id = ($user_type === 'staff') ? ($_POST['staff_steam_id'] ?? ($profile_data['steam_id'] ?? null)) : null;
-
-
-    $conn->begin_transaction();
-    try {
-        $update_sql_parts = [];
-        $params_update = [];
-        $types_update = "";
-        $table_to_update = ($user_type === 'staff') ? '`staff-manage`' : '`users`';
-
-        if ($posted_fullname !== $profile_data['fullname']) {
-            $update_sql_parts[] = "fullname = ?";
-            $params_update[] = $posted_fullname;
-            $types_update .= "s";
-        }
-        if ($posted_email !== $profile_data['email']) {
-            $update_sql_parts[] = "email = ?";
-            $params_update[] = $posted_email;
-            $types_update .= "s";
-        }
-        if ($posted_phone !== $profile_data['phone']) {
-            $update_sql_parts[] = "phone = ?";
-            $params_update[] = $posted_phone;
-            $types_update .= "s";
-        }
-
-        if ($user_type === 'staff') {
-            if ($posted_staff_age !== null && (int)$posted_staff_age !== (int)$profile_data['age']) {
-                $update_sql_parts[] = "age = ?";
-                $params_update[] = (int)$posted_staff_age;
-                $types_update .= "i";
-            }
-            // معمولاً استف خودش discord_id, discord_id2, permissions را از اینجا تغییر نمی‌دهد
-            // این مقادیر توسط بات یا ادمین تنظیم می‌شوند.
-        }
-
-        if (!empty($new_password)) {
-            if ($new_password === $confirm_password) {
-                $hashed_password = password_hash($new_password, PASSWORD_BCRYPT);
-                $update_sql_parts[] = "password = ?"; // ستون پسورد باید در هر دو جدول users و staff-manage وجود داشته باشد
-                $params_update[] = $hashed_password;
-                $types_update .= "s";
-            } else {
-                throw new Exception("رمزهای عبور جدید مطابقت ندارند.");
-            }
-        }
-
-        if (!empty($update_sql_parts)) {
-            $update_sql = "UPDATE $table_to_update SET " . implode(", ", $update_sql_parts);
-            // اضافه کردن updated_at اگر در جدول وجود دارد و به طور خودکار آپدیت نمی‌شود
-            if ($user_type === 'staff' && array_key_exists('updated_at', $profile_data)) {
-                $update_sql .= (empty($update_sql_parts) ? "" : ", ") . "updated_at = NOW()";
-            } elseif ($user_type === 'user' && method_exists($conn, 'prepare') /* check if users has updated_at too */) {
-                // $update_sql .= (empty($update_sql_parts) ? "" : ", ") . "updated_at = NOW()";
-            }
-
-
-            $update_sql .= " WHERE id = ?";
-
+    if (empty($message) && !empty($update_sql_parts)) {
+        $conn->begin_transaction();
+        try {
+            $update_sql = "UPDATE $table_to_update SET " . implode(", ", $update_sql_parts) . " WHERE id = ?";
             $params_update[] = $current_id_in_session;
             $types_update .= "i";
-
+            
             $stmt_update = $conn->prepare($update_sql);
-            if ($stmt_update === false) {
-                throw new Exception("خطای Prepare (Update $table_to_update): " . $conn->error);
-            }
-
-            // اطمینان از ارسال پارامترها فقط اگر آرایه params_update خالی نیست
-            if (!empty($params_update)) {
-                $stmt_update->bind_param($types_update, ...$params_update);
-            }
-
-            if (!$stmt_update->execute()) {
-                throw new Exception("خطای Execute (Update $table_to_update): " . $stmt_update->error);
-            }
+            $stmt_update->bind_param($types_update, ...$params_update);
+            $stmt_update->execute();
             $stmt_update->close();
+            
+            $conn->commit();
             $message = "اطلاعات با موفقیت بروزرسانی شد.";
             $message_type = 'success';
-        } else {
-            $message = "هیچ تغییری برای بروزرسانی وجود نداشت.";
-            $message_type = 'info'; // یا هر نوع پیام دیگری
+
+            // خواندن مجدد اطلاعات برای نمایش مقادیر جدید
+            $stmt_fetch_again = $conn->prepare($sql_fetch);
+            $stmt_fetch_again->bind_param("i", $current_id_in_session);
+            $stmt_fetch_again->execute();
+            $profile_data = $stmt_fetch_again->get_result()->fetch_assoc();
+            $stmt_fetch_again->close();
+
+        } catch (Exception $e) {
+            $conn->rollback();
+            $message = "خطا در بروزرسانی: " . $e->getMessage();
+            $message_type = 'error';
         }
-
-
-        $conn->commit();
-
-        // خواندن مجدد اطلاعات برای نمایش مقادیر بروز شده در فرم
-        $stmt_fetch_again = $conn->prepare($sql_fetch);
-        $stmt_fetch_again->bind_param("i", $current_id_in_session);
-        $stmt_fetch_again->execute();
-        $profile_data = $stmt_fetch_again->get_result()->fetch_assoc();
-        $stmt_fetch_again->close();
-
-    } catch (Exception $e) {
-        $conn->rollback();
-        $message = "خطا در بروزرسانی: " . $e->getMessage();
-        $message_type = 'error';
-        error_log("Profile Update Error: " . $e->getMessage());
+    } elseif (empty($message)) {
+        $message = "هیچ تغییری برای بروزرسانی وجود نداشت.";
+        $message_type = 'info';
     }
 }
 
-// بستن اتصال در انتهای اسکریپت
-if ($conn) {
-    $conn->close();
+// ۴. آماده‌سازی متغیرهای نمایشی برای قالب (بخش‌هایی که از داشبورد کپی شده)
+$final_avatar_src = '/assets/images/logo.png'; // آواتار پیش‌فرض
+if ($is_staff && !empty($profile_data['discord_id2'])) {
+    // برای سادگی، تابع دریافت آواتار را اینجا دوباره تعریف یا include می‌کنیم
+    function get_discord_avatar_url_for_profile($discord_id) {
+        if (empty($discord_id)) return null;
+        $webhook_url = 'http://83.149.95.39:1030/get-avatar-url?discord_id=' . urlencode($discord_id);
+        $secret_token = '4a97dd86-4388-4cc0-a54f-65ebbf51649d'; // توکن شما
+        $ch = curl_init();
+        curl_setopt_array($ch, [CURLOPT_URL => $webhook_url, CURLOPT_RETURNTRANSFER => 1, CURLOPT_TIMEOUT => 2, CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $secret_token]]);
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($http_code == 200) {
+            $data = json_decode($response, true);
+            return $data['avatar_url'] ?? null;
+        }
+        return null;
+    }
+    $discord_avatar_url = get_discord_avatar_url_for_profile($profile_data['discord_id2']);
+    if ($discord_avatar_url) {
+        $final_avatar_src = '../admin/image_proxy.php?url=' . urlencode($discord_avatar_url);
+    }
 }
-?>
+$user_role_display = $is_staff ? 'حساب کاربری استف' : 'حساب کاربری';
 
+$conn->close();
+?>
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ویرایش پروفایل | SSO Center</title>
-    <link rel="stylesheet" href="/../assets/css/style.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/assets/fonts/Vazirmatn-font-face.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* استایل‌های عمومی که در پاسخ داشبورد هم استفاده شد */
-        :root {
-            --text-color: #e5e7eb; 
-            --text-muted-color: #9ca3af; 
-            --card-bg: rgba(31, 41, 55, 0.7); 
-            --card-border: rgba(75, 85, 99, 0.5); 
-            --primary-color: #3b82f6; 
-            --primary-hover: #2563eb;
-            --font-family: 'Vazirmatn', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            --input-bg: rgba(55, 65, 81, 0.7); 
-            --input-border: rgba(107, 114, 128, 0.5);
-            --input-focus-border: var(--primary-color);
-            --glass-bg: rgba(55, 65, 81, 0.5);
-            --glass-border: rgba(107, 114, 128, 0.3);
-            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
-            --info-bg: rgba(59, 130, 246, 0.15); /* برای پیام info */
-            --info-color: #3b82f6;
-            --info-border: rgba(59, 130, 246, 0.3);
-            --verified-color: #34d399; 
-            --not-verified-color: #f87171; 
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('/assets/fonts/Vazirmatn-Regular.woff2') format('woff2'); /* مسیر فونت خود را تنظیم کنید */
+            font-weight: normal;
+            font-style: normal;
         }
-        body {
-            font-family: var(--font-family);
-            color: var(--text-color);
-            background-color: #0a0a1a;
-            min-height: 100vh;
-            display: flex; 
-            justify-content: center;
-            align-items: flex-start; /* تغییر به flex-start برای اسکرول خوردن محتوا */
-            padding: 80px 20px 20px 20px; /* پدینگ بالا برای هدر (اگر دارید) */
-            direction: rtl;
-            overflow-y: auto; /* اجازه اسکرول عمودی */
-        }
-        .background-image {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url('/../assets/images/background.jpg');
-            background-size: cover; background-position: center; z-index: -1;
-            filter: brightness(0.6) contrast(1.1);
-        }
-        .profile-container {
-            width: 100%;
-            max-width: 700px; /* کمی عریض‌تر برای جا دادن بخش جدید */
-            margin-bottom: 30px; /* فاصله از پایین صفحه */
-        }
-        .profile-box {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 30px 35px; 
-            box-shadow: var(--glass-shadow);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--card-border);
-            margin-bottom: 20px; /* فاصله بین باکس‌ها */
-        }
-        .profile-box h1, .profile-box h2 { /* استایل یکسان برای عناوین اصلی باکس‌ها */
-            text-align: center;
-            margin-bottom: 25px;
-            font-size: 22px; 
-            font-weight: 600;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        .profile-box h1 .fas, .profile-box h2 .fab, .profile-box h2 .fas { /* آیکون در عنوان */
-            color: var(--primary-color);
-        }
-
-        .form-group { margin-bottom: 20px; }
-        .form-group label {
-            display: block;
-            margin-bottom: 8px; 
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-muted-color);
-        }
-        .form-control {
-            width: 100%;
-            padding: 12px 15px; 
-            border-radius: 8px;
-            border: 1px solid var(--input-border);
-            background: var(--input-bg);
-            color: var(--text-color);
-            font-size: 15px;
-            transition: border-color 0.3s, box-shadow 0.3s;
-        }
-        .form-control[readonly] { /* این استایل از قبل وجود داشت */
-            background-color: rgba(55, 65, 81, 0.4);
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-        .form-control:focus {
-            outline: none;
-            border-color: var(--input-focus-border);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); 
-        }
-        .submit-btn {
-            background: var(--primary-color); color: white; padding: 12px 25px;
-            border: none; border-radius: 8px; cursor: pointer; font-size: 16px;
-            font-weight: 500; width: 100%; margin-top: 15px; 
-            transition: background-color 0.3s, transform 0.2s;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        .submit-btn:hover { background: var(--primary-hover); transform: translateY(-2px); }
-        .message {
-            padding: 15px; margin-bottom: 25px; border-radius: 8px;
-            font-size: 14px; text-align: center;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-        }
-        .message.success { background-color: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
-        .message.error { background-color: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
-        .message.info { background-color: var(--info-bg); color: var(--info-color); border: 1px solid var(--info-border); }
-
-        .form-section {
-            border-top: 1px solid var(--card-border);
-            margin-top: 25px;
-            padding-top: 25px;
-        }
-        .form-section h4 { /* استایل عنوان بخش‌های داخل فرم */
-            font-size: 16px;
-            font-weight: 600;
-            color: #fff;
-            margin-bottom: 20px; 
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .back-link {
-            display: block; text-align: center; margin-top: 20px;
-            color: var(--primary-color); text-decoration: none; font-size: 14px;
-            transition: color 0.3s;
-        }
-        .back-link:hover { color: var(--primary-hover); }
-
-        /* استایل برای بخش نمایش اطلاعات دیسکورد */
-        .discord-info-section p {
-            margin-bottom: 12px;
-            font-size: 15px;
-            line-height: 1.6;
-            color: var(--text-color);
-            background-color: rgba(55, 65, 81, 0.3); /* پس زمینه خیلی ملایم برای هر آیتم */
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid var(--input-border);
-        }
-        .discord-info-section p strong {
-            color: var(--text-muted-color);
-            margin-left: 8px; /* فاصله لیبل از مقدار */
-            font-weight: 500;
-        }
-        .discord-info-section .status-value { /* برای استفاده از رنگ‌های وضعیت */
-            font-weight: 600;
-        }
-        .discord-info-section .status-verified { color: var(--verified-color) !important; }
-        .discord-info-section .status-not-verified { color: var(--not-verified-color) !important; }
-        .discord-info-section .fas, .discord-info-section .fab {
-            margin-right: 6px; /* برای فارسی */
-        }
-        .discord-info-section .connect-prompt {
-            font-size: 0.9em;
-            color: var(--not-verified-color);
-            margin-top: 10px;
-            padding: 10px;
-            background-color: rgba(248, 113, 113, 0.1);
-            border: 1px solid rgba(248, 113, 113, 0.3);
-            border-radius: 6px;
-        }
-        .discord-info-section .connect-prompt code {
-            background-color: rgba(0,0,0,0.3);
-            padding: 2px 5px;
-            border-radius: 3px;
-            color: #f87171;
-        }
+        body { font-family: 'Vazirmatn', sans-serif; }
+        .sidebar-item.active { background-color: rgba(59, 130, 246, 0.1); border-right: 3px solid #3b82f6; color: #3b82f6; }
+        .sidebar-item.active .sidebar-icon { color: #3b82f6; }
+        html.dark .sidebar-item.active { background-color: rgba(96, 165, 250, 0.2); border-right-color: #60a5fa; color: #93c5fd; }
+        html.dark .sidebar-item.active .sidebar-icon { color: #93c5fd; }
     </style>
-<?php
-?>
-<div class="background-image"></div>
-<div class="profile-container">
-<div class="profile-container">
-
-    <?php if ($user_type === 'staff' && $profile_data): ?>
-    <div class="profile-box discord-info-box"> <h2><i class="fab fa-discord"></i> اطلاعات اتصال دیسکورد</h2>
-        <div class="discord-info-section">
-            <p>
-                <strong><i class="fas fa-user-tag"></i> نام کاربری دیسکورد (Tag):</strong>
-                <span><?= htmlspecialchars($profile_data['discord_id'] ?: 'هنوز متصل نشده') ?></span>
-            </p>
-            <p>
-                <strong><i class="fas fa-hashtag"></i> آیدی عددی دیسکورد:</strong>
-                <span><?= htmlspecialchars($profile_data['discord_id2'] ?: 'هنوز متصل نشده') ?></span>
-            </p>
-            <p>
-                <strong><i class="fas fa-shield-alt"></i> مقام‌های شناسایی شده:</strong>
-                <span><?= htmlspecialchars($profile_data['permissions'] ?: 'هنوز متصل نشده / مقامی یافت نشد') ?></span>
-            </p>
-            <p>
-                <strong><i class="fas fa-link"></i> وضعیت کلی اتصال:</strong>
-                <?php
-                    $discord_conn_status_text = 'متصل نشده یا در انتظار تایید با <code>/connect</code>';
-        $discord_conn_status_class = 'status-not-verified';
-        if (isset($profile_data['discord_conn']) && (int)$profile_data['discord_conn'] === 1) {
-            $discord_conn_status_text = 'متصل و تایید شده';
-            $discord_conn_status_class = 'status-verified';
+    <script>
+        // اسکریپت تم برای جلوگیری از فلش زدن صفحه (FOUC)
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
         }
-        ?>
-                <span class="status-value <?= $discord_conn_status_class ?>">
-                    <?= $discord_conn_status_text ?>
-                </span>
-            </p>
-            <?php if (!(isset($profile_data['discord_conn']) && (int)$profile_data['discord_conn'] === 1)): ?>
-                <p class="connect-prompt">
-                    <i class="fas fa-info-circle"></i> برای استفاده از امکانات کامل بات و تایید اتصال، لطفاً از دستور <code>/connect</code> در سرور دیسکورد استفاده کنید.
-                </p>
-            <?php endif; ?>
-        </div>
-    </div>
-    <?php endif; ?>
-    <div class="profile-box"> <h1>
-            <i class="fas fa-user-cog"></i>
-            ویرایش پروفایل
-            <span style="font-size: 0.7em; color: var(--text-muted-color);">(<?= htmlspecialchars($profile_data['username'] ?? 'کاربر') ?>)</span>
-        </h1>
-
-        <?php if ($message): ?>
-            <div class="message <?= htmlspecialchars($message_type) ?>">
-                <i class="fas <?= ($message_type === 'success') ? 'fa-check-circle' : (($message_type === 'info') ? 'fa-info-circle' : 'fa-exclamation-triangle') ?>"></i>
-                <?= htmlspecialchars($message) ?>
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
+    <div class="flex h-screen overflow-hidden">
+        <aside class="hidden md:flex flex-col w-64 bg-white dark:bg-gray-800 border-l dark:border-gray-700 transition-colors duration-300">
+            <div class="flex items-center justify-center h-16 border-b dark:border-gray-700">
+                <img src="/assets/images/logo.png" alt="Logo" class="h-8 w-8 ml-2">
+                <span class="text-gray-800 dark:text-white font-bold text-lg">SSO Center</span>
             </div>
-        <?php endif; ?>
-
-        <form method="POST">
-            <div class="form-group">
-                <label for="fullname">نام کامل:</label>
-                <input type="text" id="fullname" name="fullname" class="form-control" value="<?= htmlspecialchars($profile_data['fullname'] ?? '') ?>">
-            </div>
-            <div class="form-group">
-                <label for="email">ایمیل:</label>
-                <input type="email" id="email" name="email" class="form-control" value="<?= htmlspecialchars($profile_data['email'] ?? '') ?>">
-            </div>
-             <div class="form-group">
-                <label for="phone">تلفن:</label>
-                <input type="tel" id="phone" name="phone" class="form-control" value="<?= htmlspecialchars($profile_data['phone'] ?? '') ?>">
-            </div>
-
-            <?php if ($user_type === 'staff'): // فیلدهای مخصوص استف?>
-            <div class="form-section staff-section">
-                <h4><i class="fas fa-user-tie"></i> اطلاعات تکمیلی استف</h4>
-                <div class="form-group">
-                    <label for="staff_age">سن:</label>
-                    <input type="number" id="staff_age" name="staff_age" class="form-control" value="<?= htmlspecialchars($profile_data['age'] ?? '') ?>">
+            <nav class="flex-grow p-4 space-y-2">
+                <a href="dashboard.php" class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-400 rounded-lg sidebar-item hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <i class="fas fa-home sidebar-icon w-6 text-center ml-3"></i>
+                    داشبورد
+                </a>
+                <a href="#" class="flex items-center px-4 py-2.5 text-sm font-medium rounded-lg sidebar-item active">
+                    <i class="fas fa-user-edit sidebar-icon w-6 text-center ml-3"></i>
+                    ویرایش پروفایل
+                </a>
+                <a href="passkey_management.php" class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-400 rounded-lg sidebar-item hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <i class="fas fa-key sidebar-icon w-6 text-center ml-3"></i>
+                    مدیریت Passkey
+                </a>
+            </nav>
+            <div class="p-4 border-t dark:border-gray-700">
+                <div class="p-4 bg-gray-100 dark:bg-gray-700/50 rounded-lg">
+                    <div class="flex items-center">
+                        <img src="<?= htmlspecialchars($final_avatar_src) ?>" alt="User Avatar" class="w-10 h-10 rounded-full">
+                        <div class="mr-3">
+                            <p class="text-sm font-medium text-gray-800 dark:text-gray-100"><?= htmlspecialchars($username) ?></p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400"><?= htmlspecialchars($user_role_display) ?></p>
+                        </div>
+                    </div>
+                    <a href="logout.php" class="block mt-4 text-center text-sm text-white bg-blue-600 hover:bg-blue-700 py-2 rounded-lg transition-colors">
+                        خروج از حساب
+                    </a>
                 </div>
-                <div class="form-group">
-                    <label for="staff_steam_id">آیدی استیم (اختیاری):</label>
-                    <input type="text" id="staff_steam_id" name="staff_steam_id" class="form-control" value="<?= htmlspecialchars($profile_data['steam_id'] ?? '') ?>">
+            </div>
+        </aside>
+
+        <div class="flex flex-col flex-1 overflow-hidden">
+            <header class="flex items-center justify-between h-16 px-4 sm:px-6 bg-white dark:bg-gray-800 border-b dark:border-gray-700">
+                <div class="flex items-center">
+                    <button class="md:hidden text-gray-500 dark:text-gray-400 focus:outline-none" onclick="toggleMobileSidebar()">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <h1 class="text-lg font-medium mr-4 hidden sm:block">ویرایش پروفایل</h1>
                 </div>
                 
-                <?php if (isset($profile_data['is_verify'])): ?>
-                    <div class="form-group">
-                        <label>وضعیت احراز هویت استف (توسط ادمین):</label>
-                        <input type="text" class="form-control" value="<?= $profile_data['is_verify'] ? 'تایید شده' : 'در انتظار تایید' ?>" readonly>
+                <div class="flex items-center space-x-4">
+                    <button id="theme-toggle" class="relative text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none">
+                        <i class="fas fa-sun text-xl" id="theme-toggle-light-icon"></i>
+                        <i class="fas fa-moon text-xl hidden" id="theme-toggle-dark-icon"></i>
+                    </button>
+                    <div class="relative">
+                        <button class="flex items-center focus:outline-none" onclick="toggleUserDropdown()">
+                            <img src="<?= htmlspecialchars($final_avatar_src) ?>" alt="User" class="w-8 h-8 rounded-full">
+                        </button>
+                        <div id="user-dropdown" class="hidden absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border dark:border-gray-700">
+                            <a href="logout.php" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fas fa-sign-out-alt ml-2"></i> خروج از حساب
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <main class="flex-1 overflow-y-auto p-4 md:p-6">
+                
+                <?php if ($message): ?>
+                    <div class="mb-6 p-4 rounded-lg text-sm text-center
+                        <?php if ($message_type === 'success'): ?> bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 <?php endif; ?>
+                        <?php if ($message_type === 'error'): ?> bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 <?php endif; ?>
+                        <?php if ($message_type === 'info'): ?> bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 <?php endif; ?>
+                    ">
+                        <?= htmlspecialchars($message) ?>
                     </div>
                 <?php endif; ?>
-            </div>
-            <?php endif; ?>
 
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <?php if ($is_staff): ?>
+                    <div class="lg:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                        <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center">
+                            <i class="fab fa-discord text-indigo-500 ml-3"></i>
+                            اتصال دیسکورد
+                        </h2>
+                        <div class="space-y-3 text-sm">
+                            <p class="text-gray-600 dark:text-gray-400"><strong class="font-medium text-gray-700 dark:text-gray-300">نام کاربری:</strong> <?= htmlspecialchars($profile_data['discord_id'] ?: '---') ?></p>
+                            <p class="text-gray-600 dark:text-gray-400"><strong class="font-medium text-gray-700 dark:text-gray-300">آیدی عددی:</strong> <?= htmlspecialchars($profile_data['discord_id2'] ?: '---') ?></p>
+                            <p class="text-gray-600 dark:text-gray-400"><strong class="font-medium text-gray-700 dark:text-gray-300">مقام‌ها:</strong> <?= htmlspecialchars($profile_data['permissions'] ?: '---') ?></p>
+                             <p class="text-gray-600 dark:text-gray-400 flex items-center">
+                                <strong class="font-medium text-gray-700 dark:text-gray-300 ml-2">وضعیت:</strong>
+                                <?php if (!empty($profile_data['discord_conn'])): ?>
+                                    <span class="font-semibold text-green-600 dark:text-green-400">متصل و تایید شده</span>
+                                <?php else: ?>
+                                    <span class="font-semibold text-yellow-600 dark:text-yellow-400">در انتظار تایید</span>
+                                <?php endif; ?>
+                            </p>
+                        </div>
+                    </div>
+                    <?php endif; ?>
 
-            <div class="form-section password-section">
-                <h4><i class="fas fa-key"></i> تغییر رمز عبور</h4>
-                <p style="font-size: 0.85em; color: var(--text-muted-color); margin-bottom: 15px;">اگر نمی‌خواهید رمز عبور را تغییر دهید، این بخش را خالی بگذارید.</p>
-                <div class="form-group">
-                    <label for="new_password">رمز عبور جدید:</label>
-                    <input type="password" id="new_password" name="new_password" class="form-control" autocomplete="new-password">
+                    <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                        <form method="POST" class="space-y-6">
+                            <div>
+                                <h3 class="text-md font-semibold text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2 mb-4">اطلاعات پایه</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="form-group">
+                                        <label for="username" class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">نام کاربری (غیرقابل تغییر)</label>
+                                        <input type="text" id="username" name="username" class="w-full p-2 bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-md cursor-not-allowed" value="<?= htmlspecialchars($profile_data['username']) ?>" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="fullname" class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">نام کامل</label>
+                                        <input type="text" id="fullname" name="fullname" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500" value="<?= htmlspecialchars($profile_data['fullname'] ?? '') ?>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="phone" class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">تلفن</label>
+                                        <input type="tel" id="phone" name="phone" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500" value="<?= htmlspecialchars($profile_data['phone'] ?? '') ?>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="email" class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">ایمیل</label>
+                                        <div class="flex items-center">
+                                            <input type="email" id="email" name="email" class="w-full p-2 bg-white dark:bg-gray-700 border rounded-r-md" value="<?= htmlspecialchars($profile_data['email'] ?? '') ?>">
+                                            <span class="px-3 py-2 text-xs font-bold text-white rounded-l-md whitespace-nowrap
+                                                <?= !empty($profile_data['email_verified_at']) ? 'bg-green-600' : 'bg-yellow-600' ?>">
+                                                <?= !empty($profile_data['email_verified_at']) ? 'تایید شده' : 'تایید نشده' ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <?php if ($is_staff): ?>
+                            <div>
+                                <h3 class="text-md font-semibold text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2 mb-4">اطلاعات تکمیلی استف</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="form-group">
+                                        <label for="staff_age" class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">سن</label>
+                                        <input type="number" id="staff_age" name="staff_age" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md" value="<?= htmlspecialchars($profile_data['age'] ?? '') ?>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="staff_steam_id" class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">آیدی استیم</label>
+                                        <input type="text" id="staff_steam_id" name="staff_steam_id" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md" value="<?= htmlspecialchars($profile_data['steam_id'] ?? '') ?>">
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+
+                            <div>
+                                <h3 class="text-md font-semibold text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2 mb-4">تغییر رمز عبور</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">این بخش را فقط در صورت نیاز به تغییر رمز عبور پر کنید.</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="form-group">
+                                        <label for="new_password" class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">رمز عبور جدید</label>
+                                        <input type="password" id="new_password" name="new_password" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md" autocomplete="new-password">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="confirm_password" class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">تکرار رمز عبور</label>
+                                        <input type="password" id="confirm_password" name="confirm_password" class="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md" autocomplete="new-password">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between pt-4 border-t dark:border-gray-700">
+                            <?php if (empty($profile_data['email_verified_at']) && !empty($profile_data['email'])): ?>
+                                <form method="POST" class="m-0">
+                                    <input type="hidden" name="action" value="send_verification">
+                                    <input type="hidden" name="email_to_verify" value="<?= htmlspecialchars($profile_data['email']) ?>">
+                                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
+                                        <i class="fas fa-envelope ml-2"></i>ارسال ایمیل تایید
+                                    </button>
+                                </form>
+                            <?php endif; ?>
+                            <div class="flex items-center justify-end space-x-4 space-x-reverse pt-4 border-t dark:border-gray-700">
+                                <a href="dashboard.php" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600">بازگشت</a>
+                                <button type="submit" class="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    <i class="fas fa-save ml-2"></i>
+                                    ذخیره تغییرات
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-                 <div class="form-group">
-                    <label for="confirm_password">تکرار رمز عبور جدید:</label>
-                    <input type="password" id="confirm_password" name="confirm_password" class="form-control" autocomplete="new-password">
-                </div>
-            </div>
 
-            <button type="submit" class="submit-btn"><i class="fas fa-save"></i> ذخیره تغییرات</button>
-            <a href="dashboard.php" class="back-link"><i class="fas fa-arrow-left"></i> بازگشت به داشبورد</a>
-        </form>
+            </main>
+        </div>
     </div>
-</div>
+    
+    <div id="mobile-sidebar" class="hidden fixed inset-0 z-40 md:hidden">
+        <div class="fixed inset-0 bg-black/30" onclick="toggleMobileSidebar()"></div>
+        <div class="relative flex flex-col w-72 max-w-xs h-full bg-white dark:bg-gray-800 border-l dark:border-gray-700">
+             <div class="flex items-center justify-center h-16 border-b dark:border-gray-700">
+                <img src="/assets/images/logo.png" alt="Logo" class="h-8 w-8 ml-2">
+                <span class="text-gray-800 dark:text-white font-bold text-lg">SSO Center</span>
+            </div>
+            <nav class="flex-grow p-4 space-y-2">
+                <a href="dashboard.php" class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-400 rounded-lg sidebar-item hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <i class="fas fa-home sidebar-icon w-6 text-center ml-3"></i>داشبورد
+                </a>
+                <a href="#" class="flex items-center px-4 py-2.5 text-sm font-medium rounded-lg sidebar-item active">
+                    <i class="fas fa-user-edit sidebar-icon w-6 text-center ml-3"></i>ویرایش پروفایل
+                </a>
+                <a href="passkey_management.php" class="flex items-center px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-400 rounded-lg sidebar-item hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <i class="fas fa-key sidebar-icon w-6 text-center ml-3"></i>مدیریت Passkey
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <script>
+        // --- UI Interaction Scripts ---
+        const mobileSidebar = document.getElementById('mobile-sidebar');
+        const userDropdown = document.getElementById('user-dropdown');
+        function toggleMobileSidebar() { mobileSidebar.classList.toggle('hidden'); }
+        function toggleUserDropdown() { userDropdown.classList.toggle('hidden'); }
+        document.addEventListener('click', function(event) {
+            const userMenuButton = event.target.closest('.relative > button');
+            if (!userMenuButton && userDropdown && !userDropdown.contains(event.target)) {
+                userDropdown.classList.add('hidden');
+            }
+        }, true);
+
+        // --- Theme Toggle Script ---
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const lightIcon = document.getElementById('theme-toggle-light-icon');
+        const darkIcon = document.getElementById('theme-toggle-dark-icon');
+        function updateThemeIcons() {
+            if (document.documentElement.classList.contains('dark')) {
+                lightIcon.classList.add('hidden');
+                darkIcon.classList.remove('hidden');
+            } else {
+                lightIcon.classList.remove('hidden');
+                darkIcon.classList.add('hidden');
+            }
+        }
+        updateThemeIcons();
+        themeToggleBtn.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+            updateThemeIcons();
+        });
+    </script>
 </body>
 </html>
