@@ -607,16 +607,16 @@ label {
 .notification {
     padding: 15px;
     margin-bottom: 15px;
-    border-radius: var(--border-radius-sm);
+    border-radius: 8px;
     color: white;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 15px; /* برای ایجاد فاصله بین آیکون و متن */
+    justify-content: flex-start; /* ✅ این خط اصلاح شد */
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     animation: slideIn 0.3s ease forwards;
     transform: translateX(100%);
     opacity: 0;
-    font-family: var(--font-primary);
 }
 
 .notification.success {
@@ -812,6 +812,264 @@ label {
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     direction: ltr;
     text-align: left;
+}
+
+/* =================================
+   Modern File Upload Styling
+   ================================= */
+.upload-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 20px;
+    margin-bottom: 30px;
+}
+
+.file-upload-wrapper {
+    background-color: #1e1e2d; /* کمی تیره‌تر از پس‌زمینه کارت */
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #2d2d4a;
+}
+
+.file-upload-wrapper > label {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    display: block;
+    color: #a2a3b7;
+}
+
+.image-preview {
+    width: 100%;
+    height: 150px;
+    background-color: #161622;
+    border-radius: 6px;
+    background-size: cover;
+    background-position: center;
+    margin-bottom: 15px;
+    border: 2px dashed #3a3a5a;
+}
+
+.file-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.custom-file-input {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
+
+.file-input-label {
+    background-color: #363652;
+    color: #e0e0e0;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.file-input-label:hover {
+    background-color: #4a4a6a;
+}
+
+.file-name-display {
+    flex-grow: 1;
+    margin-right: 15px; /* در فارسی از راست */
+    font-size: 13px;
+    color: #8a99b5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* =================================
+   Sidebar Brand Link Styling (Final Fix)
+   ================================= */
+
+/* 1. Reset the parent container */
+.sidebar-title {
+    padding: 0;
+    margin: 0;
+}
+
+/* 2. Make the link itself a full, clickable block */
+.sidebar-brand-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+    transition: color 0.2s ease-in-out;
+    
+    /* This reduces the height while keeping horizontal space */
+    padding: 6px 20px; /* 15px for top/bottom, 20px for left/right */
+    width: 100%;
+    height: 100%;
+}
+
+.sidebar-brand-link:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.05); /* Optional: hover effect */
+}
+
+/* =================================
+   Sidebar Version Styling
+   ================================= */
+
+.sidebar-version {
+    padding: 15px 20px;
+    margin-top: auto; /* This pushes the version and footer to the bottom */
+    text-align: center;
+    color: #8a99b5; /* A muted text color that fits the theme */
+    font-size: 12px;
+    font-weight: 500;
+    border-top: 1px solid rgba(255, 255, 255, 0.05); /* A subtle separator line */
+}
+
+/* We need to adjust the nav to not take up all the space */
+.sidebar-nav {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+/* And ensure the main sidebar layout is a flex column */
+.admin-sidebar {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* ========================================= 
+   New Developer Info Tab Styling
+   ========================================= */
+.dev-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+.info-block {
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.info-block.full-width {
+    grid-column: 1 / -1; /* Makes the block span the full width */
+}
+
+.info-block-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.info-block .info-row {
+    margin-bottom: 15px;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.info-block .info-row:last-child {
+    margin-bottom: 0;
+}
+
+.info-block .info-row label {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+}
+
+.info-block .info-value {
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+    color: var(--text-primary);
+    font-size: 13px;
+    word-wrap: break-word;
+}
+
+.info-block .info-value a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.info-block .info-value a:hover {
+    text-decoration: underline;
+}
+
+.info-block .info-value ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+/* ========================================= 
+   Site Health Status Styling
+   ========================================= */
+.health-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+}
+
+.health-item {
+    background-color: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+}
+
+.health-item-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+}
+
+.health-item-header i {
+    font-size: 16px;
+    width: 18px;
+    text-align: center;
+}
+
+.health-item-message {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* Color Coding for Status Icons */
+.status-icon-good {
+    color: var(--success-color);
+}
+
+.status-icon-warning {
+    color: var(--warning-color);
+}
+
+.status-icon-error {
+    color: var(--danger-color);
 }
 
 @keyframes fadeIn {

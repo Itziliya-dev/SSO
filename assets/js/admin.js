@@ -270,7 +270,7 @@ document.querySelectorAll('.staff-request').forEach(btn => {
             return;
         }
 
-        if (await Dialog.confirm('تایید به عنوان استف', 'آیا از تایید این درخواست به عنوان استف اطمینان دارید؟ اطلاعات به سیستم مدیریت استف ها منتقل خواهد شد.')) {
+        if (await Dialog.confirm('تایید به عنوان استف', 'آیا از تایید این شخص به عنوان استف اطمینان دارید؟ اطلاعات به پرونده شخص انتقال داده خواهد شد.')) {
             try {
                 const response = await fetch('/admin/actions/process_request.php', { // مسیر صحیح را بررسی کنید
                     method: 'POST',
