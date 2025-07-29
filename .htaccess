@@ -1,0 +1,3 @@
+RewriteEngine On
+
+RewriteRule ^database-error/?$ /errors/db_error.php [L]
