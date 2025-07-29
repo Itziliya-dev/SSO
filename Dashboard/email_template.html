@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <title>تایید حساب کاربری</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+
+        @media (prefers-color-scheme: dark) {
+            .body-bg { background-color: #0d1117 !important; }
+            .card-bg { background-color: #161b22 !important; }
+            .text-main { color: #c9d1d9 !important; }
+            .text-muted { color: #8b949e !important; }
+            .card-border { border-color: #30363d !important; }
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; width: 100%; font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; background-color: #e5e7eb;" class="body-bg">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #e5e7eb;" class="body-bg">
+        <tr>
+            <td align="center" style="padding: 20px;">
+                <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; border: 1px solid #d1d5db; box-shadow: 0 4px 15px rgba(0,0,0,0.05);" class="card-bg card-border">
+                    <tr>
+                        <td align="center" style="padding: 30px 20px 20px 20px;">
+                            <img src="../assets/images/logo.png" alt="SSO Center Logo" width="60" style="display: block; border: 0;">
+                            </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0 40px 30px 40px; text-align: center;">
+                            <h1 style="margin: 0 0 20px 0; font-size: 24px; font-weight: 700; color: #1f2937;" class="text-main">
+                                حساب کاربری خود را تایید کنید
+                            </h1>
+                            <p style="margin: 0 0 15px 0; font-size: 16px; line-height: 1.6; color: #4b5563;" class="text-muted">
+                                سلام {{username}} عزیز،
+                            </p>
+                            <p style="margin: 0 0 30px 0; font-size: 16px; line-height: 1.6; color: #4b5563;" class="text-muted">
+                                یک قدم تا فعال‌سازی کامل حساب شما باقی مانده است. لطفاً برای تایید آدرس ایمیل خود روی دکمه زیر کلیک کنید. این لینک تا ۱ ساعت آینده معتبر است.
+                            </p>
+                            <a href="{{verification_link}}" target="_blank" style="display: inline-block; background-color: #3b82f6; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 700; font-size: 16px; transition: background-color 0.2s;">
+                                تایید ایمیل و فعال‌سازی حساب
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0 40px 30px 40px; text-align: center;">
+                            <p style="font-size: 12px; color: #ffffff; margin-top: 20px; border-top: 1px solid #e5e7eb; padding-top: 20px;" class="text-muted card-border">
+                                اگر دکمه بالا کار نمی‌کند، لینک زیر را در مرورگر خود کپی کنید:
+                                <br>
+                                <a href="{{verification_link}}" target="_blank" style="color: #3b82f6; text-decoration: none; word-break: break-all;">
+                                    {{verification_link}}
+                                </a>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="padding: 20px 30px; background-color: #304c99; border-top: 1px solid #24c60b;" class="card-border" bgcolor="#f9fafb">
+                            <p style="margin: 0; font-size: 12px; color: #ffffff;" class="text-muted">
+                                &copy; 2025 SSO Center. تمام حقوق محفوظ است.
+                            </p>
+
+                        </td>
+                    </tr>
+                </table>
+                </td>
+        </tr>
+    </table>
+</body>
+</html>
