@@ -1,9 +1,6 @@
 <?php
 
-require_once __DIR__.'/database.php'; // اطمینان حاصل کنید این فایل موجود و صحیح است
-
-
-
+require_once __DIR__.'/database.php';
 
 function updateLastLogin($conn, $id, $id_column_name, $table_name)
 {
@@ -19,138 +16,96 @@ function updateLastLogin($conn, $id, $id_column_name, $table_name)
     }
 }
 
-
-function authenticateUser($username, $password)
-{
-    try {
-        $conn = getDbConnection(); // اطمینان حاصل کنید این تابع اتصال را برمی‌گرداند
-
-        // اضافه کردن status به کوئری
-        $stmt = $conn->prepare("SELECT id, username, password, is_owner, status, has_user_panel, is_staff FROM users WHERE username = ?");
-        if (!$stmt) {
-            throw new Exception("خطا در آماده‌سازی کوئری: " . $conn->error);
-        }
-
-        $stmt->bind_param("s", $username);
-        if (!$stmt->execute()) {
-            throw new Exception("خطا در اجرای کوئری: " . $stmt->error);
-        }
-
-        $result = $stmt->get_result();
-
-        if ($result->num_rows === 0) {
-            error_log("کاربر یافت نشد: " . $username);
-            return false;
-        }
-
-        $user = $result->fetch_assoc();
-
-        if (!password_verify($password, $user['password'])) {
-            error_log("رمز عبور نادرست برای کاربر: " . $username);
-            return false;
-        }
-
-        // بازگرداندن تمام اطلاعات کاربر، شامل status
-        return $user;
-
-    } catch (Exception $e) {
-        error_log("خطای احراز هویت: " . $e->getMessage());
-        return false;
-    }
-}
-
-
+/**
+ * تابع اصلی احراز هویت که با ساختار جدید دسترسی‌ها هماهنگ شده است.
+ */
 function authenticateUserOrStaff($conn, $username, $password)
 {
-    // 1. بررسی جدول users
+    $perm_columns = "is_owner, has_user_panel, has_developer_access, can_view_dashboard, can_manage_users, can_manage_staff, can_manage_permissions, can_create_user, can_manage_requests, can_view_archive, can_view_chart, can_view_alerts, can_manage_settings, can_manage_finance";
+    // ۱. ابتدا در جدول staff-manage جستجو می‌کنیم (معمولاً تعداد استف کمتر است)
     try {
-        $stmt = $conn->prepare("SELECT id, username, password, is_owner, status, has_user_panel, is_staff FROM users WHERE username = ?");
+        $stmt = $conn->prepare("SELECT id, password, is_active, is_verify FROM `staff-manage` WHERE username = ?");
         if ($stmt) {
             $stmt->bind_param("s", $username);
             $stmt->execute();
             $result = $stmt->get_result();
-
             if ($result->num_rows === 1) {
-                $user_data = $result->fetch_assoc();
-                if (password_verify($password, $user_data['password'])) {
-                    $stmt->close();
-                    if ($user_data['status'] !== 'active') {
-                        return ['status' => 'error', 'message' => 'حساب کاربری شما (user) فعال نیست.'];
-                    }
-                    $user_data['type'] = 'user';
-                    // updateLastLogin($conn, $user_data['id'], 'id', 'users');
-                    return ['status' => 'success', 'data' => $user_data];
-                }
-            }
-            $stmt->close();
-        }
-    } catch (Exception $e) {
-        error_log("Auth Exception (Users): " . $e->getMessage());
-    }
+                $staff_data = $result->fetch_assoc();
+                $stmt->close();
+                if (password_verify($password, $staff_data['password'])) {
+                    if ($staff_data['is_active'] != 1) { return ['status' => 'error', 'message' => 'حساب استف شما غیرفعال است.']; }
 
-    // 2. بررسی جدول staff-manage
-    try {
-        $stmt = $conn->prepare("SELECT id, user_id, username, password, is_active, is_verify, permissions FROM `staff-manage` WHERE username = ?");
-        if ($stmt) {
-            $stmt->bind_param("s", $username);
-            $stmt->execute();
-            $result = $stmt->get_result();
+                    $perm_stmt = $conn->prepare("SELECT {$perm_columns} FROM staff_permissions WHERE staff_id = ?");
+                    $perm_stmt->bind_param("i", $staff_data['id']);
+                    $perm_stmt->execute();
+                    $permissions = $perm_stmt->get_result()->fetch_assoc();
+                    $perm_stmt->close();
 
-            if ($result->num_rows === 1) {
-                $staff_data_from_sm = $result->fetch_assoc();
-                if (password_verify($password, $staff_data_from_sm['password'])) {
-                    $stmt->close();
-                    if ($staff_data_from_sm['is_active'] != 1) {
-                        return ['status' => 'error', 'message' => 'حساب کاربری استف شما غیرفعال شده است.'];
-                    }
-                    if (empty($staff_data_from_sm['user_id'])) {
-                        error_log("Staff login success but staff_manage.user_id is NULL for staff_manage.id: " . $staff_data_from_sm['id']);
-                        return ['status' => 'error', 'message' => 'پیکربندی حساب استف ناقص است. با مدیر تماس بگیرید.'];
-                    }
-
-                    $response_data = [
-                        'id' => $staff_data_from_sm['user_id'],
-                        'staff_record_id' => $staff_data_from_sm['id'],
-                        'username' => $staff_data_from_sm['username'],
+                    return ['status' => 'success', 'data' => [
+                        'id' => $staff_data['id'],
+                        'username' => $username,
                         'type' => 'staff',
-                        'is_staff' => 1,
-                        'is_owner' => 0,
-                        'has_user_panel' => 0,
-                        'is_verify' => $staff_data_from_sm['is_verify'],
-                        'permissions' => $staff_data_from_sm['permissions'],
-                    ];
-                    updateLastLogin($conn, $staff_data_from_sm['id'], 'id', 'staff-manage');
-                    return ['status' => 'success', 'data' => $response_data];
+                        'is_verify' => $staff_data['is_verify'],
+                        'permissions' => $permissions ?: [] // برگرداندن آرایه دسترسی‌ها
+                    ]];
                 }
             }
-            $stmt->close();
+            if($stmt) $stmt->close();
         }
     } catch (Exception $e) {
         error_log("Auth Exception (Staff): " . $e->getMessage());
+    }
+
+    // ۲. اگر استف نبود، در جدول users جستجو می‌کنیم
+    try {
+        $stmt = $conn->prepare("SELECT id, username, password, status FROM users WHERE username = ?");
+        if ($stmt) {
+            $stmt->bind_param("s", $username);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($result->num_rows === 1) {
+                $user_data = $result->fetch_assoc();
+                $stmt->close();
+                if (password_verify($password, $user_data['password'])) {
+                    if ($user_data['status'] !== 'active') { return ['status' => 'error', 'message' => 'حساب کاربری شما فعال نیست.']; }
+                    
+                    $perm_stmt = $conn->prepare("SELECT {$perm_columns} FROM user_permissions WHERE user_id = ?");
+                    $perm_stmt->bind_param("i", $user_data['id']);
+                    $perm_stmt->execute();
+                    $permissions = $perm_stmt->get_result()->fetch_assoc();
+                    $perm_stmt->close();
+                    
+                    return ['status' => 'success', 'data' => [
+                        'id' => $user_data['id'],
+                        'username' => $user_data['username'],
+                        'type' => 'user',
+                        'permissions' => $permissions ?: [] // برگرداندن آرایه دسترسی‌ها
+                    ]];
+                }
+            }
+            if($stmt) $stmt->close();
+        }
+    } catch (Exception $e) {
+        error_log("Auth Exception (Users): " . $e->getMessage());
     }
 
     // اگر هیچ کاربری پیدا نشد
     return ['status' => 'error', 'message' => 'نام کاربری یا رمز عبور نادرست است'];
 }
 
-// اصلاح پارامتر ورودی تابع
+
 function generateSsoToken($tokenData)
 {
     $tokenDir = defined('TOKEN_DIR') ? TOKEN_DIR : '/tmp/sso_tokens';
-
-    // ایجاد پوشه اگر وجود نداشت
     if (!file_exists($tokenDir)) {
         if (!mkdir($tokenDir, 0700, true)) {
             throw new Exception('Failed to create token directory');
         }
     }
-
     $token = bin2hex(random_bytes(32));
-
     $tokenPath = "$tokenDir/$token";
     if (file_put_contents($tokenPath, json_encode($tokenData)) === false) {
         throw new Exception('Failed to write token file');
     }
-
     return $token;
 }

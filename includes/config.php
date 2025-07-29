@@ -14,16 +14,21 @@ try {
 
 // بخش دوم: خواندن تنظیمات از دیتابیس
 try {
-    $conn = getDbConnection();
+    $conn = getDbConnection(); // این تابع خودش در صورت خطا، کاربر را هدایت می‌کند
     $result = $conn->query("SELECT setting_key, setting_value FROM settings");
+    if ($result === false) {
+        // اگر کوئری با خطا مواجه شد (مثلاً جدول وجود نداشت)
+        throw new Exception("Could not query settings table.");
+    }
     $settings = [];
     while ($row = $result->fetch_assoc()) {
         $settings[$row['setting_key']] = $row['setting_value'];
     }
-    // $conn->close();
 } catch (Exception $e) {
-    // اگر اتصال به دیتابیس برای خواندن تنظیمات شکست بخورد، برنامه متوقف می‌شود
-    die("Database Connection Error: Could not fetch application settings. " . $e->getMessage());
+    error_log("Config Read Error: " . $e->getMessage());
+    // ✅ هدایت کاربر به صفحه خطای جدید
+    header('Location: /database-error');
+    exit();
 }
 
 // بخش سوم: تعریف ثابت‌ها بر اساس مقادیر خوانده شده از دیتابیس
@@ -31,7 +36,8 @@ try {
 define('BASE_URL', $settings['app_base_url'] ?? 'https://default.url');
 define('PANEL_URL', $settings['app_panel_url'] ?? 'https://default.panel.url');
 define('ADMIN_PANEL_URL', $settings['app_admin_panel_url'] ?? 'https://default.admin.url');
-define('TOKEN_DIR', $settings['app_token_dir'] ?? '/tmp/sso_tokens');
+
+$default_token_dir = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'sso_tokens';
 
 define('PTERODACTYL_URL', $settings['pterodactyl_url'] ?? '');
 define('PTERODACTYL_API_KEY_CLIENT', $settings['pterodactyl_api_key_client'] ?? '');
@@ -39,9 +45,25 @@ define('PTERODACTYL_API_KEY_APPLICATION', $settings['pterodactyl_api_key_applica
 define('PTERODACTYL_SERVER_ID', $settings['pterodactyl_server_id'] ?? '');
 
 // بخش چهارم: تنظیمات مربوط به سشن
+// بخش چهارم: تنظیمات مربوط به سشن
 if (session_status() === PHP_SESSION_NONE) {
-    ini_set('session.cookie_httponly', 1);
-    ini_set('session.cookie_secure', 1); // در محیط لوکال این خط را false کنید
-    ini_set('session.use_strict_mode', 1);
-    ini_set('session.cookie_samesite', 'None');
+    // ✅ کد جدید برای حل مشکل کوکی در محیط لوکال
+    if (in_array($_SERVER['SERVER_NAME'], ['localhost', 'sso.local'])) {
+        session_set_cookie_params([
+            'lifetime' => 86400, // 24 hours
+            'path' => '/',
+            'domain' => '', // برای کار کردن روی هر دو دامنه محلی
+            'secure' => false, // اجازه استفاده روی HTTP
+            'httponly' => true,
+            'samesite' => 'Lax' // استفاده از Lax به جای None برای سازگاری بیشتر
+        ]);
+    } else {
+        // تنظیمات برای سرور اصلی (پروداکشن)
+        ini_set('session.cookie_httponly', 1);
+        ini_set('session.cookie_secure', 1); 
+        ini_set('session.use_strict_mode', 1);
+        ini_set('session.cookie_samesite', 'Lax'); // یا 'Strict' برای امنیت بیشتر
+    }
+
+    // و در نهایت، سشن را شروع کن
 }
