@@ -172,11 +172,7 @@ CREATE TABLE IF NOT EXISTS `user_permissions` (
   CONSTRAINT `user_permissions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Seeding new setting for `vui_theme`
---
-INSERT IGNORE INTO `settings` (`setting_key`, `setting_value`) VALUES
-('vui_theme', 'vui-theme-default');
+
 --
 -- Seeding initial data for table `settings`
 --
