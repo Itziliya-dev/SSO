@@ -121,6 +121,62 @@ CREATE TABLE IF NOT EXISTS `users` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+
+--
+-- Table structure for table `staff_permissions`
+--
+CREATE TABLE IF NOT EXISTS `staff_permissions` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `staff_id` int(11) NOT NULL,
+  `has_user_panel` tinyint(1) NOT NULL DEFAULT 0,
+  `is_owner` tinyint(1) NOT NULL DEFAULT 0,
+  `has_developer_access` tinyint(1) NOT NULL DEFAULT 0,
+  `can_view_dashboard` tinyint(1) NOT NULL DEFAULT 0,
+  `can_manage_users` tinyint(1) NOT NULL DEFAULT 0,
+  `can_manage_staff` tinyint(1) NOT NULL DEFAULT 0,
+  `can_manage_permissions` tinyint(1) NOT NULL DEFAULT 0,
+  `can_create_user` tinyint(1) NOT NULL DEFAULT 0,
+  `can_manage_requests` tinyint(1) NOT NULL DEFAULT 0,
+  `can_view_archive` tinyint(1) NOT NULL DEFAULT 0,
+  `can_view_chart` tinyint(1) NOT NULL DEFAULT 0,
+  `can_view_alerts` tinyint(1) NOT NULL DEFAULT 0,
+  `can_manage_settings` tinyint(1) NOT NULL DEFAULT 0,
+  `can_manage_finance` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `staff_id_unique` (`staff_id`),
+  CONSTRAINT `staff_permissions_ibfk_1` FOREIGN KEY (`staff_id`) REFERENCES `staff-manage` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `user_permissions`
+--
+CREATE TABLE IF NOT EXISTS `user_permissions` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `has_user_panel` tinyint(1) NOT NULL DEFAULT 0,
+  `is_owner` tinyint(1) NOT NULL DEFAULT 0,
+  `has_developer_access` tinyint(1) NOT NULL DEFAULT 0,
+  `can_view_dashboard` tinyint(1) NOT NULL DEFAULT 0,
+  `can_manage_users` tinyint(1) NOT NULL DEFAULT 0,
+  `can_manage_staff` tinyint(1) NOT NULL DEFAULT 0,
+  `can_manage_permissions` tinyint(1) NOT NULL DEFAULT 0,
+  `can_create_user` tinyint(1) NOT NULL DEFAULT 0,
+  `can_manage_requests` tinyint(1) NOT NULL DEFAULT 0,
+  `can_view_archive` tinyint(1) NOT NULL DEFAULT 0,
+  `can_view_chart` tinyint(1) NOT NULL DEFAULT 0,
+  `can_view_alerts` tinyint(1) NOT NULL DEFAULT 0,
+  `can_manage_settings` tinyint(1) NOT NULL DEFAULT 0,
+  `can_manage_finance` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `user_id_unique` (`user_id`),
+  CONSTRAINT `user_permissions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Seeding new setting for `vui_theme`
+--
+INSERT IGNORE INTO `settings` (`setting_key`, `setting_value`) VALUES
+('vui_theme', 'vui-theme-default');
 --
 -- Seeding initial data for table `settings`
 --
