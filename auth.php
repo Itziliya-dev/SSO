@@ -96,7 +96,15 @@ try {
     ]);
 
     // هدایت به داشبورد
-    header('Location: /Dashboard/dashboard.php');
+    // هدایت هوشمند کاربر
+    if (isset($_SESSION['sso_redirect_uri']) && !empty($_SESSION['sso_redirect_uri'])) {
+        // اگر کاربر از یک پنل دیگر (مثل OSS) آمده بود، او را به sso_login بفرست تا توکن بگیرد
+        // چون این فایل در ریشه است، مسیر sso_login باید از auth شروع شود
+        header('Location: auth/sso_login.php'); 
+    } else {
+        // در حالت عادی، او را به داشبورد اصلی بفرست
+        header('Location: /Dashboard/dashboard.php');
+    }
     exit();
 
 } catch (Exception $e) {
