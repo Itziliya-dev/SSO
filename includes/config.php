@@ -43,6 +43,8 @@ define('PTERODACTYL_URL', $settings['pterodactyl_url'] ?? '');
 define('PTERODACTYL_API_KEY_CLIENT', $settings['pterodactyl_api_key_client'] ?? '');
 define('PTERODACTYL_API_KEY_APPLICATION', $settings['pterodactyl_api_key_application'] ?? '');
 define('PTERODACTYL_SERVER_ID', $settings['pterodactyl_server_id'] ?? '');
+define('DISCORD_BOT_DEMOTE_URL', 'http://85.133.205.9:1030/demote'); // اگر بات روی همین سرور است از 127.0.0.1 استفاده کنید، در غیر این صورت IP سرور بات را وارد کنید
+define('DISCORD_BOT_SECRET_TOKEN', '4a97dd86-4388-4cc0-a54f-65ebbf51649d'); // همان توکن سکرتی که در کد بات تعریف کردید
 
 // بخش چهارم: تنظیمات مربوط به سشن
 // بخش چهارم: تنظیمات مربوط به سشن
