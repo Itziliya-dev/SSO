@@ -41,7 +41,7 @@ $has_developer_access = !empty($permissions['has_developer_access']);
 $avatar_url = null;
 $staff_info = []; 
 if ($is_staff) {
-    $stmt = $conn->prepare("SELECT is_verify, last_login, discord_conn, discord_id2, avatar_url FROM `staff-manage` WHERE id = ? LIMIT 1");
+    $stmt = $conn->prepare("SELECT is_verify, last_login, discord_conn, discord_id2, avatar_url, permissions FROM `staff-manage` WHERE id = ? LIMIT 1");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $staff_info = $stmt->get_result()->fetch_assoc() ?: [];
@@ -117,13 +117,17 @@ if ($is_staff && !empty($staff_info)) {
         }
     }
     
-    if ($has_developer_access) {
-        $staff_display_permissions = 'توسعه‌دهنده (Dev)';
-    } elseif ($is_owner) {
-        $staff_display_permissions = 'مالک';
-    } else {
-        $staff_display_permissions = 'استف';
-    }
+if (!empty($staff_info['permissions'])) {
+    $staff_display_permissions = $staff_info['permissions'];
+} 
+// در صورتی که ستون بالا خالی بود، از منطق قبلی استفاده می‌شود
+elseif ($has_developer_access) {
+    $staff_display_permissions = 'توسعه‌دهنده (Dev)';
+} elseif ($is_owner) {
+    $staff_display_permissions = 'مالک';
+} else {
+    $staff_display_permissions = 'استف';
+}
     
     if (!$staff_is_verify) {
         $welcome_message = 'حساب کاربری استف شما هنوز تایید نشده است. تا زمان تایید، دسترسی شما محدود خواهد بود.';
@@ -231,7 +235,7 @@ $conn->close();
             <div class="p-6 border-b border-yellow-primary/20">
                 <div class="flex items-center space-x-3 space-x-reverse">
                     <div class="w-12 h-12 bg-gradient-to-br from-yellow-primary to-yellow-dark rounded-full flex items-center justify-center glow-effect">
-                         <img src="/assets/images/logo.png" alt="Logo" class="h-8 w-8">
+                         <img src="/assets/images/logo.png" alt="Logo" class="h-12 w-12 rounded-full">
                     </div>
                     <div>
                         <h2 class="text-yellow-primary font-bold text-lg">SSO Center</h2>

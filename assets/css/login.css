@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap');
+
+body {
+    font-family: 'Vazirmatn', sans-serif;
+    overflow: hidden;
+    background-color: #0f0f23;
+    color: #e5e7eb;
+}
+
+/* فرم ورود */
+.form-input {
+    background-color: #16213e;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    color: #e5e7eb;
+    transition: all 0.2s ease-in-out;
+}
+.form-input:focus {
+    outline: none;
+    border-color: #ffd700;
+    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.3);
+}
+
+/* اوورلی مودال */
+.modal-overlay {
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+}
+
+/* پس‌زمینه باکس سمت چپ */
+.showcase-bg {
+    background-color: #0f0f23;
+    background-image: radial-gradient(circle at center, rgba(168, 85, 247, 0.1), transparent 60%);
+    background-size: 120% 120%;
+    background-repeat: no-repeat;
+    animation: breathe-bg 6s ease-in-out infinite;
+}
+
+/* انیمیشن نرم جلو عقب */
+@keyframes breathe-bg {
+    0%, 100% {
+        transform: scale(1);
+        background-position: center;
+    }
+    50% {
+        transform: scale(1.03);
+        background-position: 48% 52%;
+    }
+}
+
+/* fade-in برای ورود */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.animate-fade-in {
+    animation: fadeIn 0.8s ease-out forwards;
+}
