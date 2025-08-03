@@ -2,3 +2,4 @@
 /vendor/
 sso.local-key.pem
 sso.local.pem
+.sso_install_info
