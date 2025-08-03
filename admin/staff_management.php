@@ -8,6 +8,41 @@ if (empty($_SESSION['permissions']['is_owner']) || empty($_SESSION['permissions'
     header('Location: /Dashboard/dashboard.php');
     exit();
 }
+
+function sendDemoteRequestToBot($discordId) {
+    // اگر هر یک از مقادیر لازم خالی بود، کاری انجام نده
+    if (empty(DISCORD_BOT_DEMOTE_URL) || empty(DISCORD_BOT_SECRET_TOKEN) || empty($discordId)) {
+        error_log("Discord demote request skipped: Missing config or discordId.");
+        return;
+    }
+
+    // داده‌ای که به صورت JSON به بات ارسال می‌شود
+    $payload = json_encode(['discord_id' => $discordId]);
+
+    // آماده‌سازی درخواست cURL
+    $ch = curl_init(DISCORD_BOT_DEMOTE_URL);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . DISCORD_BOT_SECRET_TOKEN,
+        'Content-Length: ' . strlen($payload)
+    ]);
+    // یک مهلت زمانی کوتاه برای پاسخ تعیین می‌کنیم تا پنل معطل نشود
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+
+    // اجرای درخواست
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    // ثبت لاگ در صورت بروز خطا (اختیاری)
+    if ($http_code !== 200) {
+        error_log("Failed to send demote request to Discord bot for ID $discordId. HTTP Code: $http_code. Response: $response");
+    }
+}
 // --- بخش API: پردازش تمام درخواست‌های AJAX ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
     if (!isset($_SESSION['is_owner']) || !$_SESSION['is_owner']) {
@@ -158,10 +193,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
                         $stmt_delete->bind_param("i", $staffId);
                         $stmt_delete->execute();
 
+                        $discordIdToDemote = $staff_data['discord_id2'] ?? null;
+                        if (!empty($discordIdToDemote)) {
+                        sendDemoteRequestToBot($discordIdToDemote);
+                        }
+
                         // اگر همه چیز موفق بود، تراکنش را تایید کن
                         $conn->commit();
-                        echo json_encode(['success' => true, 'message' => 'استف با موفقیت دیموت و آرشیو شد']);
-
+                        echo json_encode(['success' => true, 'message' => 'استف با موفقیت دیموت، آرشیو و از دیسکورد حذف شد.']);
+                        
                     } else {
                         throw new Exception('استف مورد نظر برای آرشیو یافت نشد.');
                     }
