@@ -77,7 +77,7 @@ try {
         // مرحله ۱: انتقال اطلاعات به جدول staff-manage
         $stmt = $conn->prepare("INSERT INTO `staff-manage` 
             (username, password, email, phone, fullname, age, discord_id, steam_id, tracking_code, created_at, is_active, is_verify) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 1, 1)");
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 1, 0)");
         $stmt->bind_param(
             "sssssisss",
             $request['username'],
@@ -103,7 +103,13 @@ try {
         } else {
             throw new Exception('خطا در ایجاد کارمند جدید.');
         }
-
+    if ($new_staff_id) {
+        $update_stmt = $conn->prepare("UPDATE `staff-manage` SET user_id = ? WHERE id = ?");
+        $update_stmt->bind_param("ii", $new_staff_id, $new_staff_id);
+        $update_stmt->execute();
+    } else {
+        throw new Exception('خطا در ایجاد کارمند جدید.');
+    }
         // به‌روزرسانی وضعیت درخواست
         $stmt_update = $conn->prepare("UPDATE registration_requests SET status = 'staff', processed_at = NOW(), processed_by = ? WHERE id = ?");
         $stmt_update->bind_param("si", $_SESSION['username'], $request_id);
