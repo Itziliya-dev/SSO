@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__.'/../includes/config.php';
 require_once __DIR__.'/../includes/auth_functions.php';
-require_once __DIR__.'/../includes/header.php';
+
 
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
@@ -37,7 +37,7 @@ $requests_result = $stmt->get_result();
 
 // کوئری برای شمارش درخواست‌های معلق (برای نمایش در سایدبار)
 $pending_requests_count = $conn->query("SELECT COUNT(id) as count FROM `registration_requests` WHERE status = 'pending'")->fetch_assoc()['count'];
-
+require_once __DIR__.'/../includes/header.php';
 ?>
     <title>مدیریت درخواست‌های ثبت‌نام | پنل مدیریت</title>
     <link rel="stylesheet" href="/../assets/css/admin.css">
@@ -74,6 +74,12 @@ $pending_requests_count = $conn->query("SELECT COUNT(id) as count FROM `registra
             color: #fff;
             border-color: var(--primary-color);
         }
+        button:disabled,
+button[disabled] {
+  opacity: 0.6; /* کمی شفاف می‌شود */
+  cursor: not-allowed; /* نشانگر موس به شکل "ممنوع" در می‌آید */
+  pointer-events: none; /* هرگونه رویداد کلیک را نادیده می‌گیرد */
+}
     </style>
 <?php
 ?>
