@@ -20,7 +20,28 @@ function print_warning { echo -e "${YELLOW}➜ $1${NC}"; }
 # ==============================================================================
 function install_panel {
     print_warning "Starting SSO Panel Installation..."
-    
+
+    function configure_firewall {
+    print_warning "Configuring firewall and opening required ports..."
+    PORTS=(465 587 80 443 1030)
+
+    if command -v ufw &>/dev/null; then
+        for PORT in "${PORTS[@]}"; do
+            ufw allow "$PORT" &>/dev/null
+        done
+        ufw reload &>/dev/null
+        print_success "Firewall configured using UFW."
+    elif command -v firewall-cmd &>/dev/null; then
+        for PORT in "${PORTS[@]}"; do
+            firewall-cmd --permanent --add-port="$PORT"/tcp &>/dev/null
+        done
+        firewall-cmd --reload &>/dev/null
+        print_success "Firewall configured using firewalld."
+    else
+        print_warning "No supported firewall tool (ufw/firewalld) detected. Skipping firewall configuration."
+    fi
+}
+
     print_warning "Checking and installing dependencies..."
     PACKAGES="nginx mariadb-server software-properties-common git openssl curl"
     for pkg in $PACKAGES; do
