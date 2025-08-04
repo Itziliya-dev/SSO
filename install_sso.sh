@@ -16,12 +16,9 @@ function print_error { echo -e "${RED}✖ $1${NC}"; exit 1; }
 function print_warning { echo -e "${YELLOW}➜ $1${NC}"; }
 
 # ==============================================================================
-#                             INSTALLATION LOGIC
+#                             UFW SETUP PORTS
 # ==============================================================================
-function install_panel {
-    print_warning "Starting SSO Panel Installation..."
-
-    function configure_firewall {
+function configure_firewall {
     print_warning "Configuring firewall and opening required ports..."
     PORTS=(465 587 80 443 1030)
 
@@ -42,6 +39,11 @@ function install_panel {
     fi
 }
 
+# ==============================================================================
+#                             INSTALLATION LOGIC
+# ==============================================================================
+function install_panel {
+
     print_warning "Checking and installing dependencies..."
     PACKAGES="nginx mariadb-server software-properties-common git openssl curl"
     for pkg in $PACKAGES; do
@@ -58,6 +60,8 @@ function install_panel {
     fi
     print_success "Composer is ready."
 
+    configure_firewall
+    
     print_warning "Please provide installation details (press Enter for defaults):"
     read -p "Database Name (default: sso_db): " DB_NAME; DB_NAME=${DB_NAME:-sso_db}
     read -p "Database User (default: sso_user): " DB_USER; DB_USER=${DB_USER:-sso_user}
